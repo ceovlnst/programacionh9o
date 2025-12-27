@@ -140,7 +140,7 @@
     }
     .msg.ok{border-color: rgba(4,120,87,.24); background: var(--softOk); color: var(--text)}
     .msg.bad{border-color: rgba(185,28,28,.22); background: var(--softBad); color: var(--text)}
-    .msg.warn{border-color: rgba(180,83,9,.22); background: var(--softWarn); color: var (--text)}
+    .msg.warn{border-color: rgba(180,83,9,.22); background: var(--softWarn); color: var(--text)}
     .hide{display:none !important}
 
     .slots{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
@@ -1022,11 +1022,14 @@
     checkSlots();
   }
 
-  // ===== Busy & google.script.run wrapper =====
+  
+  // ===== Busy & backend wrapper (GitHub Pages + GAS) =====
   let sessionToken = 1;
   let busyCount = 0;
   const inFlightKeys = new Set();
   const disabledEls = new Set();
+
+  const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyiM2Do1ZEupkYJ02seCDCj4PipK_bcfFAw5k4DRBrVmEV7JPYGuuVDf-KwKxCCB3_0XA/exec";
 
   function setBusy(isBusy, msg){
     const bar = $("loadingBar");
@@ -1065,51 +1068,13 @@
     inFlightKeys.clear();
     $("loadingBar").classList.add("hide");
     for(const el of Array.from(disabledEls)){
-      try{ el.disabled = false; }catch(_){}
+      try{ el.disabled = false; }catch(_e){}
     }
     disabledEls.clear();
   }
 
-  
-// ================== GAS CONFIG (GitHub Pages) ==================
-const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyiM2Do1ZEupkYJ02seCDCj4PipK_bcfFAw5k4DRBrVmEV7JPYGuuVDf-KwKxCCB3_0XA/exec";
-let sessionToken = Math.random().toString(36).slice(2);
-const inFlightKeys = new Set();
-
-async function callGAS(fnName, args, opt){
-  const o = opt || {};
-  const key = o.key ? String(o.key) : "";
-  if(key && inFlightKeys.has(key)) return;
-  if(key) inFlightKeys.add(key);
-
-  const myToken = sessionToken;
-  if(o.msg && typeof setBusy === "function") setBusy(true, o.msg);
-  if(o.disable && typeof disableEls === "function") disableEls(o.disable, true);
-
-  const finalize = ()=>{
-    if(key) inFlightKeys.delete(key);
-    if(o.disable && typeof disableEls === "function") disableEls(o.disable, false);
-    if(typeof setBusy === "function") setBusy(false);
-  };
-
-  try{
-    const res = await fetch(GAS_WEBAPP_URL, {
-      method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ fn: fnName, args: args || [] })
-    });
-
-    if(myToken !== sessionToken) { finalize(); return; }
-    if(!res.ok) throw new Error("HTTP " + res.status);
-    const json = await res.json();
-    if(!json || json.ok !== true) throw new Error(json?.error || "Error en backend");
-    try{ o.onSuccess && o.onSuccess(json.data); } finally{ finalize(); }
-  }catch(err){
-    console.error("GAS ERROR:", err);
-    try{ o.onFailure && o.onFailure(err); } finally{ finalize(); }
-  }
-}
-;
+  async function callGAS(fnName, args, opt){
+    const o = opt || {};
     const key = o.key ? String(o.key) : "";
     if(key && inFlightKeys.has(key)) return;
     if(key) inFlightKeys.add(key);
@@ -1124,33 +1089,32 @@ async function callGAS(fnName, args, opt){
       setBusy(false);
     };
 
-    const runnerBase = (typeof google !== "undefined" && google.script && google.script.run) ? google.script.run : null;
-    if(!runnerBase){
-      finalize();
-      const errMsg = "google.script.run no está disponible. Abre esta página como Web App de Google Apps Script.";
-      if(o.onFailure){
-        o.onFailure(new Error(errMsg));
-      } else {
-        alert(errMsg);
-      }
-      return;
-    }
-
-    const runner = runnerBase
-      .withSuccessHandler((res)=>{
-        if(myToken !== sessionToken) { finalize(); return; }
-        try{ o.onSuccess && o.onSuccess(res); } finally { finalize(); }
-      })
-      .withFailureHandler((err)=>{
-        if(myToken !== sessionToken) { finalize(); return; }
-        console.error("GAS error", err);
-        try{ o.onFailure && o.onFailure(err); } finally { finalize(); }
+    try{
+      const res = await fetch(GAS_WEBAPP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ fn: fnName, args: args || [] })
       });
 
-    runner[fnName].apply(runner, args || []);
+      if(myToken !== sessionToken) { finalize(); return; }
+      if(!res.ok) throw new Error("HTTP " + res.status);
+
+      const json = await res.json();
+      if(!json || json.ok !== true) throw new Error(json?.error || "Error en backend");
+
+      try{ o.onSuccess && o.onSuccess(json.data); }
+      finally{ finalize(); }
+    }catch(err){
+      if(myToken !== sessionToken) { finalize(); return; }
+      console.error("GAS ERROR:", err);
+      try{ o.onFailure && o.onFailure(err); }
+      finally{ finalize(); }
+    }
   }
 
+
   // ===== OR filter para KPIs parrilla =====
+
   function initOrCalcDefaults(){
     const exclude = new Set(["Sótano 6","Quirófano Híbrido","Urgencias","Paritorio 1","Paritorio 2"]);
     S.orCalcSelected = OR_LIST.filter(name => !exclude.has(name));
