@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gestión de Quirófanos – QuirófanosH9O</title>
+  <link rel="icon" href="data:,">
 
   <style>
     :root{
@@ -140,7 +141,7 @@
     }
     .msg.ok{border-color: rgba(4,120,87,.24); background: var(--softOk); color: var(--text)}
     .msg.bad{border-color: rgba(185,28,28,.22); background: var(--softBad); color: var(--text)}
-    .msg.warn{border-color: rgba(180,83,9,.22); background: var(--softWarn); color: var(--text)}
+    .msg.warn{border-color: rgba(180,83,9,.22); background: var(--softWarn); color: var (--text)}
     .hide{display:none !important}
 
     .slots{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
@@ -1022,15 +1023,9 @@
     checkSlots();
   }
 
-  
-  // ===== Busy & backend wrapper (GitHub Pages + GAS) =====
-  window.window.sessionToken = (typeof window.window.sessionToken !== 'undefined') ? window.window.sessionToken : 1;
+  // ===== Busy & google.script.run wrapper =====
   let busyCount = 0;
-  const inFlightKeys = new Set();
   const disabledEls = new Set();
-
-const GAS_WEBAPP_URL = "https://programacionh9o.ceo-vlnst.workers.dev";
-
 
   function setBusy(isBusy, msg){
     const bar = $("loadingBar");
@@ -1069,53 +1064,53 @@ const GAS_WEBAPP_URL = "https://programacionh9o.ceo-vlnst.workers.dev";
     inFlightKeys.clear();
     $("loadingBar").classList.add("hide");
     for(const el of Array.from(disabledEls)){
-      try{ el.disabled = false; }catch(_e){}
+      try{ el.disabled = false; }catch(_){}
     }
     disabledEls.clear();
   }
 
-  async function callGAS(fnName, args, opt){
-    const o = opt || {};
-    const key = o.key ? String(o.key) : "";
-    if(key && inFlightKeys.has(key)) return;
-    if(key) inFlightKeys.add(key);
+  
+// ================== GAS CONFIG (GitHub Pages) ==================
+const GAS_WEBAPP_URL = "https://programacionh9o.ceo-vlnst.workers.dev";
+let sessionToken = 1;
+const inFlightKeys = new Set();
 
-    const myToken = window.window.sessionToken;
-    setBusy(true, o.msg || "Procesando…");
-    disableEls(o.disable || [], true);
+async function callGAS(fnName, args, opt){
+  const o = opt || {};
+  const key = o.key ? String(o.key) : "";
+  if(key && inFlightKeys.has(key)) return;
+  if(key) inFlightKeys.add(key);
 
-    const finalize = ()=>{
-      if(key) inFlightKeys.delete(key);
-      disableEls(o.disable || [], false);
-      setBusy(false);
-    };
+  const myToken = sessionToken;
+  if(o.msg && typeof setBusy === "function") setBusy(true, o.msg);
+  if(o.disable && typeof disableEls === "function") disableEls(o.disable, true);
 
-    try{
-      const res = await fetch(GAS_WEBAPP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ fn: fnName, args: args || [] })
-      });
+  const finalize = ()=>{
+    if(key) inFlightKeys.delete(key);
+    if(o.disable && typeof disableEls === "function") disableEls(o.disable, false);
+    if(typeof setBusy === "function") setBusy(false);
+  };
 
-      if(myToken !== window.window.sessionToken) { finalize(); return; }
-      if(!res.ok) throw new Error("HTTP " + res.status);
+  try{
+    const res = await fetch(GAS_WEBAPP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ fn: fnName, args: args || [] })
+    });
 
-      const json = await res.json();
-      if(!json || json.ok !== true) throw new Error(json?.error || "Error en backend");
-
-      try{ o.onSuccess && o.onSuccess(json.data); }
-      finally{ finalize(); }
-    }catch(err){
-      if(myToken !== window.window.sessionToken) { finalize(); return; }
-      console.error("GAS ERROR:", err);
-      try{ o.onFailure && o.onFailure(err); }
-      finally{ finalize(); }
-    }
+    if(myToken !== sessionToken) { finalize(); return; }
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const json = await res.json();
+    if(!json || json.ok !== true) throw new Error(json?.error || "Error en backend");
+    try{ o.onSuccess && o.onSuccess(json.data); } finally{ finalize(); }
+  }catch(err){
+    console.error("GAS ERROR:", err);
+    try{ o.onFailure && o.onFailure(err); } finally{ finalize(); }
   }
+}
 
 
   // ===== OR filter para KPIs parrilla =====
-
   function initOrCalcDefaults(){
     const exclude = new Set(["Sótano 6","Quirófano Híbrido","Urgencias","Paritorio 1","Paritorio 2"]);
     S.orCalcSelected = OR_LIST.filter(name => !exclude.has(name));
