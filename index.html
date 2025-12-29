@@ -4,6 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Gestión de Quirófanos – QuirófanosH9O</title>
+  <link rel="icon" href="data:,">
 
   <style>
     :root{
@@ -1023,9 +1024,7 @@
   }
 
   // ===== Busy & google.script.run wrapper =====
-  let sessionToken = 1;
   let busyCount = 0;
-  const inFlightKeys = new Set();
   const disabledEls = new Set();
 
   function setBusy(isBusy, msg){
@@ -1070,47 +1069,46 @@
     disabledEls.clear();
   }
 
-  function callGAS(fnName, args, opt){
-    const o = opt || {};
-    const key = o.key ? String(o.key) : "";
-    if(key && inFlightKeys.has(key)) return;
-    if(key) inFlightKeys.add(key);
+  
+// ================== GAS CONFIG (GitHub Pages) ==================
+const GAS_WEBAPP_URL = "https://programacionh9o.ceo-vlnst.workers.dev";
+let sessionToken = 1;
+const inFlightKeys = new Set();
 
-    const myToken = sessionToken;
-    setBusy(true, o.msg || "Procesando…");
-    disableEls(o.disable || [], true);
+async function callGAS(fnName, args, opt){
+  const o = opt || {};
+  const key = o.key ? String(o.key) : "";
+  if(key && inFlightKeys.has(key)) return;
+  if(key) inFlightKeys.add(key);
 
-    const finalize = ()=>{
-      if(key) inFlightKeys.delete(key);
-      disableEls(o.disable || [], false);
-      setBusy(false);
-    };
+  const myToken = sessionToken;
+  if(o.msg && typeof setBusy === "function") setBusy(true, o.msg);
+  if(o.disable && typeof disableEls === "function") disableEls(o.disable, true);
 
-    const runnerBase = (typeof google !== "undefined" && google.script && google.script.run) ? google.script.run : null;
-    if(!runnerBase){
-      finalize();
-      const errMsg = "google.script.run no está disponible. Abre esta página como Web App de Google Apps Script.";
-      if(o.onFailure){
-        o.onFailure(new Error(errMsg));
-      } else {
-        alert(errMsg);
-      }
-      return;
-    }
+  const finalize = ()=>{
+    if(key) inFlightKeys.delete(key);
+    if(o.disable && typeof disableEls === "function") disableEls(o.disable, false);
+    if(typeof setBusy === "function") setBusy(false);
+  };
 
-    const runner = runnerBase
-      .withSuccessHandler((res)=>{
-        if(myToken !== sessionToken) { finalize(); return; }
-        try{ o.onSuccess && o.onSuccess(res); } finally { finalize(); }
-      })
-      .withFailureHandler((err)=>{
-        if(myToken !== sessionToken) { finalize(); return; }
-        console.error("GAS error", err);
-        try{ o.onFailure && o.onFailure(err); } finally { finalize(); }
-      });
+  try{
+    const res = await fetch(GAS_WEBAPP_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ fn: fnName, args: args || [] })
+    });
 
-    runner[fnName].apply(runner, args || []);
+    if(myToken !== sessionToken) { finalize(); return; }
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const json = await res.json();
+    if(!json || json.ok !== true) throw new Error(json?.error || "Error en backend");
+    try{ o.onSuccess && o.onSuccess(json.data); } finally{ finalize(); }
+  }catch(err){
+    console.error("GAS ERROR:", err);
+    try{ o.onFailure && o.onFailure(err); } finally{ finalize(); }
   }
+}
+
 
   // ===== OR filter para KPIs parrilla =====
   function initOrCalcDefaults(){
