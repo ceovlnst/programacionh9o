@@ -140,7 +140,7 @@
     }
     .msg.ok{border-color: rgba(4,120,87,.24); background: var(--softOk); color: var(--text)}
     .msg.bad{border-color: rgba(185,28,28,.22); background: var(--softBad); color: var(--text)}
-    .msg.warn{border-color: rgba(180,83,9,.22); background: var(--softWarn); color: var(--text)}
+    .msg.warn{border-color: rgba(180,83,9,.22); background: var(--softWarn); color: var (--text)}
     .hide{display:none !important}
 
     .slots{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
@@ -1022,14 +1022,11 @@
     checkSlots();
   }
 
-  
-  // ===== Busy & backend wrapper (GitHub Pages + GAS) =====
-  window.window.sessionToken = (typeof window.window.sessionToken !== 'undefined') ? window.window.sessionToken : 1;
+  // ===== Busy & google.script.run wrapper =====
+  let sessionToken = 1;
   let busyCount = 0;
   const inFlightKeys = new Set();
   const disabledEls = new Set();
-
-  const GAS_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbyiM2Do1ZEupkYJ02seCDCj4PipK_bcfFAw5k4DRBrVmEV7JPYGuuVDf-KwKxCCB3_0XA/exec";
 
   function setBusy(isBusy, msg){
     const bar = $("loadingBar");
@@ -1068,18 +1065,23 @@
     inFlightKeys.clear();
     $("loadingBar").classList.add("hide");
     for(const el of Array.from(disabledEls)){
-      try{ el.disabled = false; }catch(_e){}
+      try{ el.disabled = false; }catch(_){}
     }
     disabledEls.clear();
   }
 
-  async function callGAS(fnName, args, opt){
+  
+  // 🔧 URL del Worker (Cloudflare) que hace proxy al WebApp de Apps Script (para GitHub Pages)
+  // Ejemplo: "https://tu-worker.tudominio.workers.dev"
+  const API_WORKER_URL = ""; // <-- PÉGALA AQUÍ
+
+function callGAS(fnName, args, opt){
     const o = opt || {};
     const key = o.key ? String(o.key) : "";
     if(key && inFlightKeys.has(key)) return;
     if(key) inFlightKeys.add(key);
 
-    const myToken = window.window.sessionToken;
+    const myToken = sessionToken;
     setBusy(true, o.msg || "Procesando…");
     disableEls(o.disable || [], true);
 
@@ -1089,32 +1091,57 @@
       setBusy(false);
     };
 
-    try{
-      const res = await fetch(GAS_WEBAPP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ fn: fnName, args: args || [] })
-      });
+    // 1) Si el HTML lo sirve Apps Script (HtmlService/WebApp) -> google.script.run
+    const runnerBase = (typeof google !== "undefined" && google.script && google.script.run) ? google.script.run : null;
+    if(runnerBase){
+      const runner = runnerBase
+        .withSuccessHandler((res)=>{
+          if(myToken !== sessionToken) { finalize(); return; }
+          try{ o.onSuccess && o.onSuccess(res); } finally { finalize(); }
+        })
+        .withFailureHandler((err)=>{
+          if(myToken !== sessionToken) { finalize(); return; }
+          console.error("GAS error", err);
+          try{ o.onFailure && o.onFailure(err); } finally { finalize(); }
+        });
 
-      if(myToken !== window.window.sessionToken) { finalize(); return; }
-      if(!res.ok) throw new Error("HTTP " + res.status);
-
-      const json = await res.json();
-      if(!json || json.ok !== true) throw new Error(json?.error || "Error en backend");
-
-      try{ o.onSuccess && o.onSuccess(json.data); }
-      finally{ finalize(); }
-    }catch(err){
-      if(myToken !== window.window.sessionToken) { finalize(); return; }
-      console.error("GAS ERROR:", err);
-      try{ o.onFailure && o.onFailure(err); }
-      finally{ finalize(); }
+      runner[fnName].apply(runner, args || []);
+      return;
     }
+
+    // 2) Si estás en GitHub Pages / fuera de GAS -> Worker (CORS) -> WebApp /exec (doPost)
+    (async ()=>{
+      try{
+        if(!API_WORKER_URL){
+          throw new Error("API_WORKER_URL no configurada en el index (URL del Worker).");
+        }
+
+        const resp = await fetch(API_WORKER_URL, {
+          method: "POST",
+          headers: { "Content-Type":"application/json" },
+          body: JSON.stringify({ fn: fnName, args: args || [] })
+        });
+
+        const txt = await resp.text();
+        let json;
+        try{ json = JSON.parse(txt); }catch(_){ throw new Error("Respuesta no-JSON: " + txt.slice(0,200)); }
+
+        if(!json || json.ok !== true){
+          throw new Error((json && json.error) ? json.error : "Error desconocido");
+        }
+
+        if(myToken !== sessionToken) { finalize(); return; }
+        try{ o.onSuccess && o.onSuccess(json.data); } finally { finalize(); }
+
+      }catch(err){
+        if(myToken !== sessionToken) { finalize(); return; }
+        console.error("API error", err);
+        try{ o.onFailure && o.onFailure(err); } finally { finalize(); }
+      }
+    })();
   }
 
-
   // ===== OR filter para KPIs parrilla =====
-
   function initOrCalcDefaults(){
     const exclude = new Set(["Sótano 6","Quirófano Híbrido","Urgencias","Paritorio 1","Paritorio 2"]);
     S.orCalcSelected = OR_LIST.filter(name => !exclude.has(name));
