@@ -2417,6 +2417,16 @@ function openGroupsModal(){
   });
 }
 
+function normalizeStr(value){
+  let s = String(value||"").trim().toLowerCase();
+  if(!s) return "";
+  try{
+    s = s.normalize("NFD").replace(/[\u0300-\u036f]/g,""); // quita acentos
+  }catch(_){}
+  s = s.replace(/\s+/g," ");
+  return s;
+}
+
 function normalizeEquipoKey(value){
   let s = String(value||"").trim();
   if(!s) return "";
