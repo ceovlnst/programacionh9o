@@ -2354,8 +2354,13 @@ function openGroupsModal(){
       return `
         <details class="gTeam">
           <summary>
-            <div>${escapeHtml(team)}</div>
-            <div class="badge">${members.length}</div>
+            <div style="display:flex;align-items:center;gap:10px;justify-content:space-between;width:100%">
+              <div>${escapeHtml(team)}</div>
+              <div style="display:flex;align-items:center;gap:8px">
+                <button class="btn small" type="button" onclick="event.preventDefault();event.stopPropagation();requestSwapForTeam(String(team));">Pedir cambio</button>
+                <div class="badge">${members.length}</div>
+              </div>
+            </div>
           </summary>
           <div class="gMembers">${rows}</div>
         </details>
@@ -2411,10 +2416,48 @@ function openGroupsModal(){
       const countEl = $("groupsCount");
       const listEl = $("groupsList");
       if(countEl) countEl.textContent = "No se han podido cargar los equipos quirúrgicos.";
-      if(listEl) listEl.innerHTML = `<div class="msg bad">No hay datos en la hoja GruposQuirúrgicos o no se ha podido cargar.</div>`;
+      if(listEl) listEl.innerHTML = `<div class="msg bad">No hay datos en la hoja GruposQuirúrgicos o no se ha podido cargar.<br><span class="mut">Detalle: ${escapeHtml(((_ && _.message) ? _.message : ""))}</span></div>`;
       wireSearch([]);
     }
   });
+}
+
+
+function requestSwapForTeam(teamKey){
+  try{
+    const team = String(teamKey || "").trim();
+    if(!team) return;
+
+    // buscamos el primer miembro con email válido
+    const members = ((S.groupsByEquipo && S.groupsByEquipo[team]) ? S.groupsByEquipo[team] : []).slice();
+    members.sort((a,b)=> String(a.nombre||a.cirujano||"").localeCompare(String(b.nombre||b.cirujano||""),"es"));
+
+    const first = members.find(m => ((m.correo || m.email || "")+"").trim());
+    const toEmail = first ? ((first.correo || first.email || "")+"").trim() : "";
+    if(!toEmail){
+      alert("Este equipo no tiene email configurado en la hoja GruposQuirúrgicos.");
+      return;
+    }
+
+    const who = (S.emailVisible || "—").toString().trim();
+    const comment = prompt("Escribe un comentario opcional para acompañar la solicitud:", "¿Te interesaría cambiar el quirófano?") || "";
+    const subject = "Solicitud de cambio de quirófano";
+    const body =
+`Hola,
+
+Soy ${who}. ¿Te interesaría cambiar el quirófano?
+
+Equipo quirúrgico: ${team}
+Comentario: ${comment}
+
+Gracias.`;
+
+    const mailto = `mailto:${encodeURIComponent(toEmail)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailto;
+  }catch(e){
+    console.error(e);
+    alert("No se ha podido preparar el email.");
+  }
 }
 
 function normalizeEquipoKey(value){
