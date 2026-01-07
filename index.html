@@ -221,49 +221,12 @@
       background: rgba(255,255,255,.98);
       padding:14px;
       box-shadow: 0 30px 80px rgba(15,23,42,.30);
-    }
-    .modal h3{margin:0 0 8px 0}
-    .modal .x{float:right}
-
-    /* ===== Modal scrolling (para listados largos) ===== */
-    .modal{
       max-height: calc(100vh - 32px);
       overflow: auto;
     }
-    #modalBody{
-      font-size: 13px;
-      line-height: 1.35;
-    }
 
-    /* ===== Equipos quirúrgicos (compacto) ===== */
-    .teamsWrap{display:flex;flex-direction:column;gap:8px}
-    details.team{
-      border:1px solid var(--line);
-      border-radius:12px;
-      background:#fff;
-      padding:8px 10px;
-    }
-    details.team > summary{
-      list-style:none;
-      cursor:pointer;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      user-select:none;
-    }
-    details.team > summary::-webkit-details-marker{display:none}
-    .teamCode{font-weight:700}
-    .teamTable{width:100%;border-collapse:collapse;margin-top:8px}
-    .teamTable th,.teamTable td{
-      padding:6px;
-      border-bottom:1px solid var(--line);
-      font-size:12px;
-      vertical-align:top;
-    }
-    .teamTable th{color:var(--muted);background:var(--bg);text-align:left;font-weight:600}
-    .teamTable td{word-break:break-word}
-
+    .modal h3{margin:0 0 8px 0}
+    .modal .x{float:right}
     .hint{color:var(--muted);font-size:12px;margin-top:6px}
 
     .kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
@@ -465,6 +428,41 @@
       flex-wrap:wrap;
       min-width:0;
     }
+  
+    /* --- Equipos quirúrgicos (modal compacto + buscador) --- */
+    .groupsWrap{margin-top:8px}
+    .groupsTools{display:flex;gap:8px;align-items:center;margin:8px 0 10px 0}
+    .groupsTools input{
+      flex:1; padding:10px 12px; border:1px solid var(--line); border-radius:12px;
+      outline:none; font-size:13px; background:#fff;
+    }
+    .groupsTools input:focus{border-color: rgba(29,78,216,.45); box-shadow: 0 0 0 3px rgba(29,78,216,.10)}
+    .groupsCount{color:var(--muted); font-size:12px; margin:0 0 6px 0}
+    .groupsList{max-height: 70vh; overflow:auto; padding-right:6px}
+    .gTeam{border:1px solid var(--line); border-radius:14px; background:#fff; margin:8px 0}
+    .gTeam summary{
+      cursor:pointer; list-style:none;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      padding:10px 12px; font-weight:800;
+    }
+    .gTeam summary::-webkit-details-marker{display:none}
+    .gMembers{padding:0 12px 10px 12px}
+    .gRow{
+      display:grid;
+      grid-template-columns: 1.3fr 1.1fr .9fr;
+      gap:10px;
+      padding:6px 0;
+      border-top:1px solid var(--line);
+      font-size:12px;
+      color: var(--text);
+    }
+    .gRow .mut{color:var(--muted)}
+    .gRow a{color: var(--acc); text-decoration:none}
+    .gRow a:hover{text-decoration:underline}
+    @media (max-width: 720px){
+      .gRow{grid-template-columns: 1fr}
+    }
+
   </style>
 </head>
 
@@ -2272,8 +2270,118 @@ function openGroupsModal(){
     return showMsg($("msgGrid"), "Debes entrar primero con tu PIN.", "warn");
   }
 
-  // Abrimos modal inmediatamente para dar feedback
-  openModalBase("Equipos quirúrgicos", "Cargando…");
+  // Modal base: buscador + contenedor scrollable
+  const baseHtml = `
+    <div class="groupsWrap">
+      <div class="groupsTools">
+        <input id="groupsSearch" type="text" placeholder="Buscar equipo, cirujano, especialidad, email o teléfono…" />
+        <button class="btn" id="groupsClear" type="button">Limpiar</button>
+      </div>
+      <div id="groupsCount" class="groupsCount">Cargando equipos quirúrgicos…</div>
+      <div id="groupsList" class="groupsList"></div>
+    </div>
+  `;
+  openModalBase("Equipos quirúrgicos", baseHtml);
+
+  // Helpers locales
+  const render = (groups, q)=>{
+    const query = normalizeStr(q||"");
+    const byTeam = {};
+    (groups||[]).forEach(g=>{
+      const k = normalizeEquipoKey(g.equipo);
+      if(!k) return;
+      if(!byTeam[k]) byTeam[k] = [];
+      byTeam[k].push(g);
+    });
+
+    let teams = Object.keys(byTeam).sort((a,b)=>a.localeCompare(b,"es"));
+    // Filtrado: equipo o cualquiera de sus miembros
+    if(query){
+      teams = teams.filter(team=>{
+        if(normalizeStr(team).includes(query)) return true;
+        const members = byTeam[team] || [];
+        return members.some(m=>{
+          const hay = [
+            m.cirujano, m.nombre,
+            m.especialidad,
+            m.correo, m.email,
+            m.telefono, m.teléfono
+          ].map(x=>normalizeStr(x)).join(" ");
+          return hay.includes(query);
+        });
+      });
+    }
+
+    const listEl = $("groupsList");
+    const countEl = $("groupsCount");
+    if(!listEl || !countEl) return;
+
+    const totalTeams = Object.keys(byTeam).length;
+    const shownTeams = teams.length;
+    countEl.textContent = query
+      ? `Mostrando ${shownTeams} de ${totalTeams} equipos (filtro: "${q}")`
+      : `Equipos: ${totalTeams} — usa el buscador para filtrar`;
+
+    if(!teams.length){
+      listEl.innerHTML = `<div class="msg warn">No hay resultados con ese filtro.</div>`;
+      return;
+    }
+
+    const html = teams.map(team=>{
+      const members = (byTeam[team] || []).slice();
+      members.sort((a,b)=>{
+        const na = (a.cirujano || a.nombre || "").toString();
+        const nb = (b.cirujano || b.nombre || "").toString();
+        return na.localeCompare(nb,"es");
+      });
+
+      const rows = members.map(m=>{
+        const cir = escapeHtml(m.cirujano || m.nombre || "—");
+        const esp = escapeHtml(m.especialidad || "—");
+        const emailRaw = (m.correo || m.email || "").toString().trim();
+        const telRaw = (m.telefono || m.teléfono || "").toString().trim();
+        const email = emailRaw ? `<a href="mailto:${escapeHtml(emailRaw)}">${escapeHtml(emailRaw)}</a>` : `<span class="mut">—</span>`;
+        const tel = telRaw ? `<span>${escapeHtml(telRaw)}</span>` : `<span class="mut">—</span>`;
+        return `
+          <div class="gRow">
+            <div><b>${cir}</b></div>
+            <div class="mut">${esp}</div>
+            <div>${email} <span class="mut">•</span> ${tel}</div>
+          </div>
+        `;
+      }).join("");
+
+      return `
+        <details class="gTeam">
+          <summary>
+            <div>${escapeHtml(team)}</div>
+            <div class="badge">${members.length}</div>
+          </summary>
+          <div class="gMembers">${rows}</div>
+        </details>
+      `;
+    }).join("");
+
+    listEl.innerHTML = html;
+  };
+
+  const wireSearch = (groups)=>{
+    const inp = $("groupsSearch");
+    const clr = $("groupsClear");
+    if(inp){
+      inp.oninput = ()=>{
+        render(groups, inp.value || "");
+      };
+      // foco por comodidad
+      setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 50);
+    }
+    if(clr){
+      clr.onclick = ()=>{
+        if(inp) inp.value = "";
+        render(groups, "");
+      };
+    }
+  };
 
   callGAS("listSurgicalGroups", [S.pin], {
     key:"listGroupsModal",
@@ -2282,73 +2390,29 @@ function openGroupsModal(){
       const groups = (res && res.groups) ? res.groups : [];
       S.groupsCache = groups;
 
-      if(!groups.length){
-        const body = `No hay datos en la hoja <b>GruposQuirúrgicos</b> (o está vacía).`;
-        openModalBase("Equipos quirúrgicos", body);
-        return;
-      }
-
-      // Agrupar por equipo (normalizado)
-      const byTeam = {};
+      // refresca cache global para el panel de "info de bloque"
+      const map = {};
       groups.forEach(g=>{
         const k = normalizeEquipoKey(g.equipo);
         if(!k) return;
-        if(!byTeam[k]) byTeam[k] = [];
-        byTeam[k].push(g);
+        if(!map[k]) map[k] = [];
+        map[k].push(g);
       });
+      S.groupsByEquipo = map;
+      S.groupsLoaded = true;
 
-      const teams = Object.keys(byTeam).sort((a,b)=>a.localeCompare(b,"es"));
-
-      // Render HTML
-      const html = `<div class="teamsWrap">` + teams.map(k=>{
-        const members = (byTeam[k] || []).slice();
-        members.sort((a,b)=>{
-          const na = (a.cirujano || a.nombre || "").toString();
-          const nb = (b.cirujano || b.nombre || "").toString();
-          return na.localeCompare(nb,"es");
-        });
-
-        const rows = members.map(m=>{
-          const cir = escapeHtml(m.cirujano || m.nombre || "");
-          const esp = escapeHtml(m.especialidad || "");
-          const email = escapeHtml(m.correo || m.email || "");
-          const tel = escapeHtml(m.telefono || m.teléfono || "");
-          return `<tr>
-            <td>${cir || "—"}</td>
-            <td>${esp || "—"}</td>
-            <td>${email || "—"}</td>
-            <td>${tel || "—"}</td>
-          </tr>`;
-        }).join("");
-
-        return `
-          <details class="team">
-            <summary>
-              <span class="teamCode">${escapeHtml(k)}</span>
-              <span class="badge">${members.length} miembro${members.length===1?"":"s"}</span>
-            </summary>
-            <div style="overflow:auto">
-              <table class="teamTable">
-                <thead>
-                  <tr>
-                    <th>Cirujano</th>
-                    <th>Especialidad</th>
-                    <th>Email</th>
-                    <th>Teléfono</th>
-                  </tr>
-                </thead>
-                <tbody>${rows || ""}</tbody>
-              </table>
-            </div>
-          </details>
-        `;
-      }).join("") + `</div>`;
-
-      openModalBase("Equipos quirúrgicos", html);
+      wireSearch(groups);
+      render(groups, $("groupsSearch") ? $("groupsSearch").value : "");
     },
-    onFailure:(e)=>{
-      const msg = e?.message || String(e) || "No se ha podido cargar la hoja.";
-      openModalBase("Equipos quirúrgicos", escapeHtml(msg));
+    onFailure:(_)=>{
+      S.groupsCache = [];
+      S.groupsByEquipo = {};
+      S.groupsLoaded = true;
+      const countEl = $("groupsCount");
+      const listEl = $("groupsList");
+      if(countEl) countEl.textContent = "No se han podido cargar los equipos quirúrgicos.";
+      if(listEl) listEl.innerHTML = `<div class="msg bad">No hay datos en la hoja GruposQuirúrgicos o no se ha podido cargar.</div>`;
+      wireSearch([]);
     }
   });
 }
