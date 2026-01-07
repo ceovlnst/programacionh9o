@@ -224,6 +224,46 @@
     }
     .modal h3{margin:0 0 8px 0}
     .modal .x{float:right}
+
+    /* ===== Modal scrolling (para listados largos) ===== */
+    .modal{
+      max-height: calc(100vh - 32px);
+      overflow: auto;
+    }
+    #modalBody{
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    /* ===== Equipos quirúrgicos (compacto) ===== */
+    .teamsWrap{display:flex;flex-direction:column;gap:8px}
+    details.team{
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#fff;
+      padding:8px 10px;
+    }
+    details.team > summary{
+      list-style:none;
+      cursor:pointer;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      user-select:none;
+    }
+    details.team > summary::-webkit-details-marker{display:none}
+    .teamCode{font-weight:700}
+    .teamTable{width:100%;border-collapse:collapse;margin-top:8px}
+    .teamTable th,.teamTable td{
+      padding:6px;
+      border-bottom:1px solid var(--line);
+      font-size:12px;
+      vertical-align:top;
+    }
+    .teamTable th{color:var(--muted);background:var(--bg);text-align:left;font-weight:600}
+    .teamTable td{word-break:break-word}
+
     .hint{color:var(--muted);font-size:12px;margin-top:6px}
 
     .kpi{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:10px}
@@ -2260,7 +2300,7 @@ function openGroupsModal(){
       const teams = Object.keys(byTeam).sort((a,b)=>a.localeCompare(b,"es"));
 
       // Render HTML
-      const html = teams.map(k=>{
+      const html = `<div class="teamsWrap">` + teams.map(k=>{
         const members = (byTeam[k] || []).slice();
         members.sort((a,b)=>{
           const na = (a.cirujano || a.nombre || "").toString();
@@ -2274,35 +2314,35 @@ function openGroupsModal(){
           const email = escapeHtml(m.correo || m.email || "");
           const tel = escapeHtml(m.telefono || m.teléfono || "");
           return `<tr>
-            <td style="padding:8px;border-bottom:1px solid var(--line)">${cir || "—"}</td>
-            <td style="padding:8px;border-bottom:1px solid var(--line)">${esp || "—"}</td>
-            <td style="padding:8px;border-bottom:1px solid var(--line)">${email || "—"}</td>
-            <td style="padding:8px;border-bottom:1px solid var(--line)">${tel || "—"}</td>
+            <td>${cir || "—"}</td>
+            <td>${esp || "—"}</td>
+            <td>${email || "—"}</td>
+            <td>${tel || "—"}</td>
           </tr>`;
         }).join("");
 
         return `
-          <div style="margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-              <div><b>${escapeHtml(k)}</b></div>
-              <div class="badge">${members.length} miembro${members.length===1?"":"s"}</div>
-            </div>
-            <div style="margin-top:8px;overflow:auto">
-              <table style="border-collapse:collapse;width:100%;min-width:680px">
+          <details class="team">
+            <summary>
+              <span class="teamCode">${escapeHtml(k)}</span>
+              <span class="badge">${members.length} miembro${members.length===1?"":"s"}</span>
+            </summary>
+            <div style="overflow:auto">
+              <table class="teamTable">
                 <thead>
-                  <tr style="background:var(--bg);color:var(--muted)">
-                    <th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Cirujano</th>
-                    <th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Especialidad</th>
-                    <th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Email</th>
-                    <th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Teléfono</th>
+                  <tr>
+                    <th>Cirujano</th>
+                    <th>Especialidad</th>
+                    <th>Email</th>
+                    <th>Teléfono</th>
                   </tr>
                 </thead>
                 <tbody>${rows || ""}</tbody>
               </table>
             </div>
-          </div>
+          </details>
         `;
-      }).join("");
+      }).join("") + `</div>`;
 
       openModalBase("Equipos quirúrgicos", html);
     },
