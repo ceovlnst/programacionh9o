@@ -1578,52 +1578,47 @@ function callGAS(fnName, args, opt){
     $("modalBack").classList.remove("hide");
   }
 
+  function appendGrupoQuirurgicoToModal(label){
+    const key = String(label || "").trim();
+    if(!key) return;
+
+    // Evita duplicados si se abre el modal varias veces
+    const mb = $("modalBody");
+    if(mb && mb.querySelector && mb.querySelector("[data-team-card='1']")) return;
+
+    callGAS("getGrupoQuirurgicoByEquipo", [S.pin, key], {
+      key: "getGrupoByEquipo",
+      msg: null,
+      onSuccess: (res)=>{
+        const data = res;
+        if(!data || !data.equipo) return;
+
+        const html = `
+          <div class="card" data-team-card="1" style="margin-top:12px;">
+            <h3>Equipo quirúrgico</h3>
+            <div style="font-size:13px;line-height:1.45">
+              <div><b>Equipo:</b> ${escapeHtml(data.equipo || "")}</div>
+              ${data.nombre ? `<div><b>Nombre:</b> ${escapeHtml(data.nombre)}</div>` : ``}
+              ${data.especialidad ? `<div><b>Especialidad:</b> ${escapeHtml(data.especialidad)}</div>` : ``}
+              ${data.email ? `<div><b>Correo:</b> ${escapeHtml(data.email)}</div>` : ``}
+              ${data.telefono ? `<div><b>Teléfono:</b> ${escapeHtml(data.telefono)}</div>` : ``}
+            </div>
+          </div>
+        `;
+        const mb2 = $("modalBody");
+        if(mb2) mb2.insertAdjacentHTML("beforeend", html);
+      },
+      onFailure: ()=>{/*silencioso*/}
+    });
+  }
+
+
+
   function closeModal(){
     S.modalCtx = null;
     $("modalBack").classList.add("hide");
     hideMsg($("modalMsg"));
   }
-
-
-
-// ===== EXTRA: ficha de grupo quirúrgico (desde Sheets "GruposQuirúrgicos") =====
-function appendGroupInfoToModal(label){
-  const equipo = (label || "").trim();
-  if(!equipo) return;
-
-  // Evita pisar si cambias de celda rápido
-  const token = Date.now();
-  S.modalGroupToken = token;
-
-  callGAS("getSurgicalGroupByEquipo", [S.pin, equipo], {
-    msg: "Cargando grupo quirúrgico…",
-    onSuccess:(res)=>{
-      if(S.modalGroupToken !== token) return;
-      const g = res && res.group ? res.group : null;
-      if(!g) return;
-
-      let lines = "
-
-— Grupo quirúrgico —
-";
-      lines += `Equipo: ${g.equipo || equipo}
-`;
-      if(g.nombre)       lines += `Nombre: ${g.nombre}
-`;
-      if(g.especialidad) lines += `Especialidad: ${g.especialidad}
-`;
-      if(g.correo)       lines += `Correo: ${g.correo}
-`;
-      if(g.telefono)     lines += `Teléfono: ${g.telefono}
-`;
-
-      $("modalBody").textContent = ($("modalBody").textContent || "") + lines;
-    },
-    onFailure:(_e)=>{
-      // Silencioso: si no hay hoja o no hay coincidencia, no mostramos nada extra
-    }
-  });
-}
 
   function openModalInfo(ctx){
     const body = `
@@ -1684,9 +1679,10 @@ Etiqueta: ${ctx.label || "(sin etiqueta)"}
 EventId: ${ctx.eventId || "(no disponible)"}
     `;
     openModalBase("Bloque NO estructural", escapeHtml(body));
-    appendGroupInfoToModal(ctx.label);
 
-    const actions = $("modalActions");
+    
+    appendGrupoQuirurgicoToModal(ctx.label);
+const actions = $("modalActions");
     actions.innerHTML = "";
 
     const btnDelete = document.createElement("button");
@@ -1753,8 +1749,9 @@ EventId: ${ctx.eventId || "(no disponible)"}
         (No se ha podido reconstruir el bloque completo)
       `;
       openModalBase("Bloque estructural", escapeHtml(body));
-    appendGroupInfoToModal(ctx.label);
-      return;
+      
+    appendGrupoQuirurgicoToModal(ctx.label);
+return;
     }
 
     const startISO = `${ctx.dateStr}T${String(blk.startHour).padStart(2,"0")}:00:00`;
@@ -1783,7 +1780,6 @@ Etiqueta: ${ctx.label || "(sin etiqueta)"}
 RuleId: ${ctx.ruleId || "(no disponible)"}
     `;
     openModalBase("Bloque estructural", escapeHtml(body));
-    appendGroupInfoToModal(ctx.label);
 
     const actions = $("modalActions");
     actions.innerHTML = "";
