@@ -1767,7 +1767,15 @@ RuleId: ${ctx.ruleId || "(no disponible)"}
     if(!S.modalCtx || !S.modalCtx.eventId) return;
     if(!confirm("¿Seguro que quieres cancelar este bloque estructural SOLO para este día?")) return;
 
-    callGAS("masterCancelStructuralOccurrence", [S.pin, S.modalCtx.eventId], {
+    const payload = {
+      eventId: S.modalCtx.eventId,   // id de serie (informativo)
+      startISO: S.modalCtx.startISO, // ✅ clave para identificar la ocurrencia exacta
+      hours: S.modalCtx.hours,
+      orName: S.modalCtx.orName,
+      ruleId: S.modalCtx.ruleId || ""
+    };
+
+    callGAS("masterCancelStructuralOccurrence", [S.pin, payload], {
       key:"cancelStructBlock",
       msg:"Cancelando bloque estructural…",
       onSuccess:(res)=>{
