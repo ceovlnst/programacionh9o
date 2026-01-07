@@ -463,7 +463,17 @@
       .gRow{grid-template-columns: 1fr}
     }
 
-  </style>
+  
+  /* --- Modal genérico --- */
+  .modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
+  .modalCard{width:min(640px,100%);background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(2,6,23,.25);padding:14px}
+  .modalTop{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .modalTitle{font-weight:900;font-size:16px}
+  .iconBtn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;cursor:pointer}
+  textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;resize:vertical;font-family:inherit}
+  .label{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
+
+</style>
 </head>
 
 <body>
@@ -2335,27 +2345,41 @@ function openGroupsModal(){
         return na.localeCompare(nb,"es");
       });
 
-      const rows = members.map(m=>{
-        const cir = escapeHtml(m.cirujano || m.nombre || "—");
-        const esp = escapeHtml(m.especialidad || "—");
-        const emailRaw = (m.correo || m.email || "").toString().trim();
-        const telRaw = (m.telefono || m.teléfono || "").toString().trim();
-        const email = emailRaw ? `<a href="mailto:${escapeHtml(emailRaw)}">${escapeHtml(emailRaw)}</a>` : `<span class="mut">—</span>`;
-        const tel = telRaw ? `<span>${escapeHtml(telRaw)}</span>` : `<span class="mut">—</span>`;
+      // Primer email válido del equipo (para el botón)
+      const firstEmail = (members.find(x=>{
+        const e = (x.correo || x.email || "").toString().trim();
+        return !!e;
+      }) || {}).correo || (members.find(x=>{
+        const e = (x.correo || x.email || "").toString().trim();
+        return !!e;
+      }) || {}).email || "";
+
+      const rows = members.map(mem=>{
+        const cir = escapeHtml(mem.cirujano || mem.nombre || "—");
+        const esp = escapeHtml(mem.especialidad || "—");
         return `
           <div class="gRow">
             <div><b>${cir}</b></div>
             <div class="mut">${esp}</div>
-            <div>${email} <span class="mut">•</span> ${tel}</div>
           </div>
         `;
       }).join("");
 
+      const canMail = String(firstEmail||"").trim();
+      const mailBtn = canMail
+        ? `<button type="button" class="btn btnSmall gMailBtn" data-email="${escapeHtml(canMail)}" title="Abrir tu cliente de correo">Pedir cambio</button>`
+        : `<span class="mut" title="No hay email en la hoja para este equipo">Sin email</span>`;
+
       return `
         <details class="gTeam">
           <summary>
-            <div>${escapeHtml(team)}</div>
-            <div class="badge">${members.length}</div>
+            <div class="gTeamHead">
+              <div class="gTeamTitle">${escapeHtml(team)}</div>
+              <div class="gTeamRight">
+                ${mailBtn}
+                <div class="badge">${members.length}</div>
+              </div>
+            </div>
           </summary>
           <div class="gMembers">${rows}</div>
         </details>
@@ -2363,6 +2387,93 @@ function openGroupsModal(){
     }).join("");
 
     listEl.innerHTML = html;
+
+    
+// --- Solicitud de cambio: modal + envío directo (Apps Script) ---
+let __swapTeam = "";
+let __swapContext = null;
+
+function openSwapModal(team, context){
+  __swapTeam = String(team||"").trim();
+  __swapContext = (context && typeof context === "object") ? context : null;
+
+  const modal = document.getElementById("swapModal");
+  const comment = document.getElementById("swapComment");
+  const status = document.getElementById("swapStatus");
+  if(!modal || !comment || !status) return;
+
+  comment.value = "";
+  status.textContent = "";
+
+  modal.style.display = "flex";
+  comment.focus();
+
+  const close = ()=>{ modal.style.display = "none"; };
+  document.getElementById("swapCloseBtn")?.addEventListener("click", close, { once:true });
+  document.getElementById("swapCancelBtn")?.addEventListener("click", close, { once:true });
+
+  document.getElementById("swapSendBtn")?.addEventListener("click", async ()=>{
+    try{
+      status.textContent = "Enviando...";
+      const payload = {
+        pin: S.pin,
+        equipo: __swapTeam,
+        comment: comment.value || "",
+        context: __swapContext || {}
+      };
+
+      // Si estamos en GAS: google.script.run
+      if (typeof google !== "undefined" && google.script && google.script.run){
+        google.script.run
+          .withSuccessHandler((res)=>{
+            if(res && res.ok){
+              status.textContent = "✅ Solicitud enviada a " + (res.to || "");
+              setTimeout(()=>{ modal.style.display = "none"; }, 800);
+            } else {
+              status.textContent = "❌ No se pudo enviar.";
+            }
+          })
+          .withFailureHandler((err)=>{
+            status.textContent = "❌ " + (err?.message || String(err||"Error"));
+          })
+          .requestSwapToTeam(payload.pin, payload.equipo, payload.comment, payload.context);
+        return;
+      }
+
+      // Si estamos en GitHub/Worker: llamada fetch al Worker (si existe API_WORKER_URL y endpoint)
+      if (typeof API_WORKER_URL !== "undefined" && API_WORKER_URL){
+        const r = await fetch(API_WORKER_URL, {
+          method: "POST",
+          headers: { "Content-Type":"application/json" },
+          body: JSON.stringify({ fn:"requestSwapToTeam", args:[payload.pin, payload.equipo, payload.comment, payload.context] })
+        });
+        const data = await r.json();
+        if(data && data.ok){
+          status.textContent = "✅ Solicitud enviada a " + (data.to || "");
+          setTimeout(()=>{ modal.style.display = "none"; }, 800);
+        } else {
+          status.textContent = "❌ " + (data?.error || "No se pudo enviar.");
+        }
+        return;
+      }
+
+      status.textContent = "❌ No hay canal de envío disponible (GAS/Worker).";
+    }catch(e){
+      status.textContent = "❌ " + (e?.message || String(e));
+    }
+  }, { once:true });
+}
+
+// Botón por equipo: abre modal
+listEl.querySelectorAll(".gMailBtn").forEach(btn=>{
+  btn.addEventListener("click", (ev)=>{
+    ev.preventDefault();
+    ev.stopPropagation();
+    const team = btn.closest(".gTeam")?.querySelector(".gTeamTitle")?.textContent || "";
+    openSwapModal(team, S.selectedCellContext || null);
+  }, { capture:false });
+});
+
   };
 
   const wireSearch = (groups)=>{
@@ -3032,5 +3143,32 @@ function groupInfoHtmlForLabel(label){
     $("btnModalApply").onclick = applyModalChanges;
   });
 </script>
+
+<!-- Modal: Solicitud de cambio -->
+<div id="swapModal" class="modal" style="display:none">
+  <div class="modalCard">
+    <div class="modalTop">
+      <div class="modalTitle">Solicitud de cambio</div>
+      <button class="iconBtn" id="swapCloseBtn" title="Cerrar">✕</button>
+    </div>
+
+    <div class="mut" style="margin-top:6px">
+      Se enviará un correo al primer miembro del equipo seleccionado. Incluye tu nombre, correo y teléfono.
+    </div>
+
+    <div style="margin-top:12px">
+      <div class="label">Comentario (opcional)</div>
+      <textarea id="swapComment" rows="5" placeholder="Ej.: Necesito cambiar por incompatibilidad de horario, preferiría por la tarde, etc."></textarea>
+    </div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
+      <button class="btn" id="swapCancelBtn" type="button">Cancelar</button>
+      <button class="btn primary" id="swapSendBtn" type="button">Enviar solicitud</button>
+    </div>
+
+    <div id="swapStatus" class="mut" style="margin-top:10px"></div>
+  </div>
+</div>
+
 </body>
 </html>
