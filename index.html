@@ -576,6 +576,7 @@
             </div>
             <div class="actions" style="margin-top:26px">
               <button class="btn primary" id="btnLoadGrid">Cargar parrilla</button>
+              <button class="btn" id="btnOpenGroups" title="Ver grupos quirúrgicos">Equipos quirúrgicos</button>
             </div>
           </div>
 
@@ -930,7 +931,11 @@
 
     masterNSQuery: null,
     masterNSSlots: [],
-    masterNSSelectedIndex: -1
+    masterNSSelectedIndex: -1,
+
+    groupsCache: [],
+    groupsByEquipo: {},
+    groupsLoaded: false
   };
 
   const $ = (id)=>document.getElementById(id);
@@ -977,7 +982,7 @@
     $("btnGoReserve").classList.toggle("hide", !S.pin || master);
     $("btnGoMine").classList.toggle("hide", !S.pin || master);
 
-    $("btnGoGrid").classList.toggle("hide", !S.pin || !master);
+    $("btnGoGrid").classList.toggle("hide", !S.pin);
 
     $("btnGoStruct").classList.toggle("hide", !S.pin || !master);
     $("btnGoWait").classList.toggle("hide", !S.pin || !master);
@@ -1585,19 +1590,68 @@ function callGAS(fnName, args, opt){
   }
 
   function openModalInfo(ctx){
-    const body = `
-      Fecha: ${fmtDMY(ctx.dateStr)}\n
-      Quirófano: ${escapeHtml(ctx.orName)}\n
-      Hora: ${String(ctx.hour).padStart(2,"0")}:00
-    `;
-    openModalBase("Detalle de celda", escapeHtml(body));
-  }
+      // Modal informativo (sin acciones). Para usuarios no master: ver qué hay y a qué equipo pertenece.
+      const g = S.lastGrid;
+      const row = g?.rows?.find(r => r.orName === ctx.orName);
+      const idx = Number.isFinite(ctx.cellIndex) ? ctx.cellIndex : 0;
+
+      let title = "Detalle";
+      let body = "";
+
+      if(ctx.status === "FREE"){
+        title = "Hueco libre";
+        body = `
+Hueco libre
+
+Fecha: ${fmtDMY(ctx.dateStr)}
+Quirófano: ${ctx.orName}
+Hora: ${String(ctx.hour).padStart(2,"0")}:00
+        `;
+      } else if(ctx.status === "STRUCT" || ctx.status === "NON"){
+        const kindTxt = (ctx.status === "STRUCT") ? "Bloque estructural" : "Bloque NO estructural";
+        title = kindTxt;
+
+        // Inferir inicio y duración
+        let startHour = ctx.hour;
+        let hours = 1;
+        if(row && ctx.eventId){
+          let i = idx;
+          while(i > 0 && row.cells[i-1]?.eventId === ctx.eventId) i--;
+          startHour = row.cells[i]?.hour ?? ctx.hour;
+          hours = inferEventHoursInRow_(row, i);
+        } else if(row && ctx.eventId){
+          const blk = buildEventBlockInfo(ctx.orName, ctx.eventId);
+          if(blk){ startHour = blk.startHour; hours = blk.duration; }
+        }
+
+        body = `
+${kindTxt}
+
+Fecha: ${fmtDMY(ctx.dateStr)}
+Quirófano: ${ctx.orName}
+Inicio de bloque: ${String(startHour).padStart(2,"0")}:00
+Duración estimada: ${hours} h
+Etiqueta: ${ctx.label || "(sin etiqueta)"}
+        `;
+      } else {
+        title = "Detalle de celda";
+        body = `
+Fecha: ${fmtDMY(ctx.dateStr)}
+Quirófano: ${ctx.orName}
+Hora: ${String(ctx.hour).padStart(2,"0")}:00
+        `;
+      }
+
+      // Añadir info de equipo si coincide con etiqueta
+      const extra = groupInfoHtmlForLabel(ctx.label);
+      openModalBase(title, escapeHtml(body) + extra);
+    }
 
   function openModalFree(ctx){
     const body = `
       Hueco libre\n
       Fecha: ${fmtDMY(ctx.dateStr)}\n
-      Quirófano: ${escapeHtml(ctx.orName)}\n
+      Quirófano: ${ctx.orName}\n
       Hora: ${String(ctx.hour).padStart(2,"0")}:00\n
       (Solo consulta desde la parrilla)
     `;
@@ -1706,7 +1760,7 @@ EventId: ${ctx.eventId || "(no disponible)"}
       const body = `
         Bloque estructural\n
         Fecha: ${fmtDMY(ctx.dateStr)}\n
-        Quirófano: ${escapeHtml(ctx.orName)}\n
+        Quirófano: ${ctx.orName}\n
         Hora seleccionada: ${String(ctx.hour).padStart(2,"0")}:00\n
         (No se ha podido reconstruir el bloque completo)
       `;
@@ -2141,7 +2195,128 @@ RuleId: ${ctx.ruleId || "(no disponible)"}
     renderStructFiltersAndList();
   }
 
-  // ===== NO ESTRUCTURALES DESDE MASTER (búsqueda de huecos) =====
+  
+
+// ===== GRUPOS QUIRÚRGICOS (consulta) =====
+function loadGroupsCache(force){
+  if(!S.pin) return;
+  if(S.groupsLoaded && !force) return;
+  callGAS("listSurgicalGroups", [S.pin], {
+    key:"listGroups",
+    msg:"Cargando equipos quirúrgicos…",
+    onSuccess:(res)=>{
+      const groups = (res && res.groups) ? res.groups : [];
+      S.groupsCache = groups;
+
+      // Mapa normalizado: equipo -> [miembros]
+      const map = {};
+      groups.forEach(g=>{
+        const k = normalizeEquipoKey(g.equipo);
+        if(!k) return;
+        if(!map[k]) map[k] = [];
+        map[k].push(g);
+      });
+      S.groupsByEquipo = map;
+      S.groupsLoaded = true;
+    },
+    onFailure:(_)=>{
+      S.groupsCache = [];
+      S.groupsByEquipo = {};
+      S.groupsLoaded = true;
+    }
+  });
+}
+
+function openGroupsModal(){
+  if(!S.pin){
+    return showMsg($("msgGrid"), "Debes entrar primero con tu PIN.", "warn");
+  }
+
+  // Cargar si falta y abrir modal con lo que haya
+  loadGroupsCache(false);
+
+  const groups = S.groupsCache || [];
+  if(!groups.length){
+    const body = `No hay datos en la hoja <b>GruposQuirúrgicos</b> o no se ha podido cargar.`;
+    openModalBase("Equipos quirúrgicos", body);
+    return;
+  }
+
+  // Agrupar por equipo (normalizado)
+  const byTeam = {};
+  groups.forEach(g=>{
+    const k = normalizeEquipoKey(g.equipo);
+    if(!k) return;
+    if(!byTeam[k]) byTeam[k] = [];
+    byTeam[k].push(g);
+  });
+
+  const teams = Object.keys(byTeam).sort((a,b)=>a.localeCompare(b,"es"));
+
+  const body = teams.map(team=>{
+    const members = byTeam[team].slice();
+    members.sort((a,b)=> String(a.nombre||"").localeCompare(String(b.nombre||""),"es"));
+
+    const membersHtml = members.map(m=>{
+      const nombre = escapeHtml(m.nombre||"");
+      const esp    = escapeHtml(m.especialidad||"");
+      const correo = escapeHtml(m.correo||"");
+      const tel    = escapeHtml(m.telefono||"");
+      const line2 = [esp, correo, tel].filter(Boolean).join(" · ");
+      return `<div class="rchip" style="width:100%;margin-top:8px">
+        <b>${nombre || "&nbsp;"}</b>
+        <small>${line2 || "&nbsp;"}</small>
+      </div>`;
+    }).join("");
+
+    return `<div class="card" style="margin:10px 0">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+        <div><b>${escapeHtml(team)}</b></div>
+        <div class="muted" style="font-size:12px">${members.length} miembro${members.length===1?"":"s"}</div>
+      </div>
+      <div style="margin-top:6px">${membersHtml}</div>
+    </div>`;
+  }).join("");
+
+  openModalBase("Equipos quirúrgicos", body);
+}
+
+function normalizeEquipoKey(value){
+  let s = String(value||"").trim();
+  if(!s) return "";
+  s = s.replace(/\s+/g, " ");
+  // En la parrilla, la Etiqueta suele venir como "E CPLI" (prefijo "E ")
+  s = s.replace(/^E\s+/i, "");
+  return s.toUpperCase();
+}
+
+function groupInfoHtmlForLabel(label){
+  const key = normalizeEquipoKey(label);
+  if(!key) return "";
+  const arr = (S.groupsByEquipo && S.groupsByEquipo[key]) ? S.groupsByEquipo[key] : null;
+  if(!arr || !arr.length) return "";
+
+  const members = arr.slice();
+  members.sort((a,b)=> String(a.nombre||"").localeCompare(String(b.nombre||""),"es"));
+
+  const membersHtml = members.map(m=>{
+    const nombre = escapeHtml(m.nombre||"");
+    const esp    = escapeHtml(m.especialidad||"");
+    const correo = escapeHtml(m.correo||"");
+    const tel    = escapeHtml(m.telefono||"");
+    const line2 = [esp, correo, tel].filter(Boolean).join(" · ");
+    return `<div style="margin-top:8px">
+      <div><b>${nombre || "&nbsp;"}</b>${esp?` <span class="muted">(${esp})</span>`:""}</div>
+      <div class="muted" style="font-size:12px">${[correo, tel].filter(Boolean).join(" · ") || "&nbsp;"}</div>
+    </div>`;
+  }).join("");
+
+  return `<div style="margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--softAcc)">
+    <div style="margin-bottom:4px"><b>Equipo quirúrgico:</b> ${escapeHtml(key)}</div>
+    ${membersHtml}
+  </div>`;
+}
+// ===== NO ESTRUCTURALES DESDE MASTER (búsqueda de huecos) =====
   function buildDoctorSelectForMaster(){
     const sel = $("stNSDoctorSelect");
     if(!sel) return;
@@ -2669,6 +2844,9 @@ RuleId: ${ctx.ruleId || "(no disponible)"}
     $("btnLoadMine").onclick = loadMine;
 
     $("btnLoadGrid").onclick = loadGrid;
+
+    if($("btnOpenGroups")) $("btnOpenGroups").onclick = openGroupsModal;
+
     $("btnToggleAdvanced").onclick = ()=>{
       $("advancedBox").classList.toggle("hide");
     };
