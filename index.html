@@ -1578,42 +1578,6 @@ function callGAS(fnName, args, opt){
     $("modalBack").classList.remove("hide");
   }
 
-  function appendGrupoQuirurgicoToModal(label){
-    const key = String(label || "").trim();
-    if(!key) return;
-
-    // Evita duplicados si se abre el modal varias veces
-    const mb = $("modalBody");
-    if(mb && mb.querySelector && mb.querySelector("[data-team-card='1']")) return;
-
-    callGAS("getGrupoQuirurgicoByEquipo", [S.pin, key], {
-      key: "getGrupoByEquipo",
-      msg: null,
-      onSuccess: (res)=>{
-        const data = res;
-        if(!data || !data.equipo) return;
-
-        const html = `
-          <div class="card" data-team-card="1" style="margin-top:12px;">
-            <h3>Equipo quirúrgico</h3>
-            <div style="font-size:13px;line-height:1.45">
-              <div><b>Equipo:</b> ${escapeHtml(data.equipo || "")}</div>
-              ${data.nombre ? `<div><b>Nombre:</b> ${escapeHtml(data.nombre)}</div>` : ``}
-              ${data.especialidad ? `<div><b>Especialidad:</b> ${escapeHtml(data.especialidad)}</div>` : ``}
-              ${data.email ? `<div><b>Correo:</b> ${escapeHtml(data.email)}</div>` : ``}
-              ${data.telefono ? `<div><b>Teléfono:</b> ${escapeHtml(data.telefono)}</div>` : ``}
-            </div>
-          </div>
-        `;
-        const mb2 = $("modalBody");
-        if(mb2) mb2.insertAdjacentHTML("beforeend", html);
-      },
-      onFailure: ()=>{/*silencioso*/}
-    });
-  }
-
-
-
   function closeModal(){
     S.modalCtx = null;
     $("modalBack").classList.add("hide");
@@ -1680,9 +1644,7 @@ EventId: ${ctx.eventId || "(no disponible)"}
     `;
     openModalBase("Bloque NO estructural", escapeHtml(body));
 
-    
-    appendGrupoQuirurgicoToModal(ctx.label);
-const actions = $("modalActions");
+    const actions = $("modalActions");
     actions.innerHTML = "";
 
     const btnDelete = document.createElement("button");
@@ -1749,9 +1711,7 @@ const actions = $("modalActions");
         (No se ha podido reconstruir el bloque completo)
       `;
       openModalBase("Bloque estructural", escapeHtml(body));
-      
-    appendGrupoQuirurgicoToModal(ctx.label);
-return;
+      return;
     }
 
     const startISO = `${ctx.dateStr}T${String(blk.startHour).padStart(2,"0")}:00:00`;
