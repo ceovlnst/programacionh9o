@@ -1584,6 +1584,47 @@ function callGAS(fnName, args, opt){
     hideMsg($("modalMsg"));
   }
 
+
+
+// ===== EXTRA: ficha de grupo quirúrgico (desde Sheets "GruposQuirúrgicos") =====
+function appendGroupInfoToModal(label){
+  const equipo = (label || "").trim();
+  if(!equipo) return;
+
+  // Evita pisar si cambias de celda rápido
+  const token = Date.now();
+  S.modalGroupToken = token;
+
+  callGAS("getSurgicalGroupByEquipo", [S.pin, equipo], {
+    msg: "Cargando grupo quirúrgico…",
+    onSuccess:(res)=>{
+      if(S.modalGroupToken !== token) return;
+      const g = res && res.group ? res.group : null;
+      if(!g) return;
+
+      let lines = "
+
+— Grupo quirúrgico —
+";
+      lines += `Equipo: ${g.equipo || equipo}
+`;
+      if(g.nombre)       lines += `Nombre: ${g.nombre}
+`;
+      if(g.especialidad) lines += `Especialidad: ${g.especialidad}
+`;
+      if(g.correo)       lines += `Correo: ${g.correo}
+`;
+      if(g.telefono)     lines += `Teléfono: ${g.telefono}
+`;
+
+      $("modalBody").textContent = ($("modalBody").textContent || "") + lines;
+    },
+    onFailure:(_e)=>{
+      // Silencioso: si no hay hoja o no hay coincidencia, no mostramos nada extra
+    }
+  });
+}
+
   function openModalInfo(ctx){
     const body = `
       Fecha: ${fmtDMY(ctx.dateStr)}\n
@@ -1643,6 +1684,7 @@ Etiqueta: ${ctx.label || "(sin etiqueta)"}
 EventId: ${ctx.eventId || "(no disponible)"}
     `;
     openModalBase("Bloque NO estructural", escapeHtml(body));
+    appendGroupInfoToModal(ctx.label);
 
     const actions = $("modalActions");
     actions.innerHTML = "";
@@ -1711,6 +1753,7 @@ EventId: ${ctx.eventId || "(no disponible)"}
         (No se ha podido reconstruir el bloque completo)
       `;
       openModalBase("Bloque estructural", escapeHtml(body));
+    appendGroupInfoToModal(ctx.label);
       return;
     }
 
@@ -1740,6 +1783,7 @@ Etiqueta: ${ctx.label || "(sin etiqueta)"}
 RuleId: ${ctx.ruleId || "(no disponible)"}
     `;
     openModalBase("Bloque estructural", escapeHtml(body));
+    appendGroupInfoToModal(ctx.label);
 
     const actions = $("modalActions");
     actions.innerHTML = "";
