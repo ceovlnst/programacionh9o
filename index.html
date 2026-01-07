@@ -2232,53 +2232,85 @@ function openGroupsModal(){
     return showMsg($("msgGrid"), "Debes entrar primero con tu PIN.", "warn");
   }
 
-  // Cargar si falta y abrir modal con lo que haya
-  loadGroupsCache(false);
+  // Abrimos modal inmediatamente para dar feedback
+  openModalBase("Equipos quirúrgicos", "Cargando…");
 
-  const groups = S.groupsCache || [];
-  if(!groups.length){
-    const body = `No hay datos en la hoja <b>GruposQuirúrgicos</b> o no se ha podido cargar.`;
-    openModalBase("Equipos quirúrgicos", body);
-    return;
-  }
+  callGAS("listSurgicalGroups", [S.pin], {
+    key:"listGroupsModal",
+    msg:"Cargando equipos quirúrgicos…",
+    onSuccess:(res)=>{
+      const groups = (res && res.groups) ? res.groups : [];
+      S.groupsCache = groups;
 
-  // Agrupar por equipo (normalizado)
-  const byTeam = {};
-  groups.forEach(g=>{
-    const k = normalizeEquipoKey(g.equipo);
-    if(!k) return;
-    if(!byTeam[k]) byTeam[k] = [];
-    byTeam[k].push(g);
+      if(!groups.length){
+        const body = `No hay datos en la hoja <b>GruposQuirúrgicos</b> (o está vacía).`;
+        openModalBase("Equipos quirúrgicos", body);
+        return;
+      }
+
+      // Agrupar por equipo (normalizado)
+      const byTeam = {};
+      groups.forEach(g=>{
+        const k = normalizeEquipoKey(g.equipo);
+        if(!k) return;
+        if(!byTeam[k]) byTeam[k] = [];
+        byTeam[k].push(g);
+      });
+
+      const teams = Object.keys(byTeam).sort((a,b)=>a.localeCompare(b,"es"));
+
+      // Render HTML
+      const html = teams.map(k=>{
+        const members = (byTeam[k] || []).slice();
+        members.sort((a,b)=>{
+          const na = (a.cirujano || a.nombre || "").toString();
+          const nb = (b.cirujano || b.nombre || "").toString();
+          return na.localeCompare(nb,"es");
+        });
+
+        const rows = members.map(m=>{
+          const cir = escapeHtml(m.cirujano || m.nombre || "");
+          const esp = escapeHtml(m.especialidad || "");
+          const email = escapeHtml(m.correo || m.email || "");
+          const tel = escapeHtml(m.telefono || m.teléfono || "");
+          return `<tr>
+            <td style="padding:8px;border-bottom:1px solid var(--line)">${cir || "—"}</td>
+            <td style="padding:8px;border-bottom:1px solid var(--line)">${esp || "—"}</td>
+            <td style="padding:8px;border-bottom:1px solid var(--line)">${email || "—"}</td>
+            <td style="padding:8px;border-bottom:1px solid var(--line)">${tel || "—"}</td>
+          </tr>`;
+        }).join("");
+
+        return `
+          <div style="margin:10px 0;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+              <div><b>${escapeHtml(k)}</b></div>
+              <div class="badge">${members.length} miembro${members.length===1?"":"s"}</div>
+            </div>
+            <div style="margin-top:8px;overflow:auto">
+              <table style="border-collapse:collapse;width:100%;min-width:680px">
+                <thead>
+                  <tr style="background:var(--bg);color:var(--muted)">
+                    <th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Cirujano</th>
+                    <th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Especialidad</th>
+                    <th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Email</th>
+                    <th style="text-align:left;padding:8px;border-bottom:1px solid var(--line)">Teléfono</th>
+                  </tr>
+                </thead>
+                <tbody>${rows || ""}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      openModalBase("Equipos quirúrgicos", html);
+    },
+    onFailure:(e)=>{
+      const msg = e?.message || String(e) || "No se ha podido cargar la hoja.";
+      openModalBase("Equipos quirúrgicos", escapeHtml(msg));
+    }
   });
-
-  const teams = Object.keys(byTeam).sort((a,b)=>a.localeCompare(b,"es"));
-
-  const body = teams.map(team=>{
-    const members = byTeam[team].slice();
-    members.sort((a,b)=> String(a.nombre||"").localeCompare(String(b.nombre||""),"es"));
-
-    const membersHtml = members.map(m=>{
-      const nombre = escapeHtml(m.nombre||"");
-      const esp    = escapeHtml(m.especialidad||"");
-      const correo = escapeHtml(m.correo||"");
-      const tel    = escapeHtml(m.telefono||"");
-      const line2 = [esp, correo, tel].filter(Boolean).join(" · ");
-      return `<div class="rchip" style="width:100%;margin-top:8px">
-        <b>${nombre || "&nbsp;"}</b>
-        <small>${line2 || "&nbsp;"}</small>
-      </div>`;
-    }).join("");
-
-    return `<div class="card" style="margin:10px 0">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
-        <div><b>${escapeHtml(team)}</b></div>
-        <div class="muted" style="font-size:12px">${members.length} miembro${members.length===1?"":"s"}</div>
-      </div>
-      <div style="margin-top:6px">${membersHtml}</div>
-    </div>`;
-  }).join("");
-
-  openModalBase("Equipos quirúrgicos", body);
 }
 
 function normalizeEquipoKey(value){
