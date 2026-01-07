@@ -2284,6 +2284,15 @@ function openGroupsModal(){
   openModalBase("Equipos quirúrgicos", baseHtml);
 
   // Helpers locales
+function normalizeStr(v){
+  // Normaliza para búsquedas: minúsculas, sin tildes/diacríticos, trim
+  return String(v ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+}
+
   const render = (groups, q)=>{
     const query = normalizeStr(q||"");
     const byTeam = {};
