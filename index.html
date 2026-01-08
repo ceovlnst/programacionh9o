@@ -473,6 +473,323 @@
   textarea{width:100%;padding:10px;border:1px solid var(--line);border-radius:12px;resize:vertical;font-family:inherit}
   .label{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
 
+
+  /* ===============================
+     Grupos quirúrgicos (UI mejorada)
+     =============================== */
+  .gToolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-top:12px}
+  .gSearchWrap{flex:1;position:relative}
+  .gSearch{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+  .gHint{font-size:12px;color:var(--muted);white-space:nowrap}
+  .gGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+  @media (max-width: 720px){ .gGrid{grid-template-columns:1fr} .gHint{display:none} }
+  .gCard{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden}
+  .gCardTop{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:12px 12px 10px 12px;background:linear-gradient(180deg, rgba(29,78,216,.06), rgba(29,78,216,0))}
+  .gCardTitle{font-weight:900;font-size:14px;line-height:1.2}
+  .gCardSub{margin-top:4px;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:12px;color:var(--muted)}
+  .gCardBtns{display:flex;align-items:center;gap:10px}
+  .badge{min-width:28px;height:28px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;font-weight:900;border:1px solid var(--line);background:#fff;color:var(--text)}
+  .gCardBody{padding:10px 12px 12px 12px}
+  .gMembers{display:flex;flex-direction:column;gap:8px}
+  .gRow{padding:10px 10px;border:1px solid var(--line);border-radius:14px;background:#fff;display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .gRowL{min-width:0}
+  .gRowName{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gRowSpec{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .gEmpty{border:1px dashed var(--line);border-radius:16px;padding:14px;color:var(--muted);background:#fff;margin-top:12px}
+  .disclosure{cursor:pointer;user-select:none}
+  .disclosure::-webkit-details-marker{display:none}
+  details.gCard[open] .gCardTop{background:linear-gradient(180deg, rgba(4,120,87,.07), rgba(4,120,87,0))}
+
+
+  /* --- Modal a pantalla completa (para listas largas) --- */
+  .modalBack .modal.full{
+    width:min(980px, 96vw);
+    height:min(92vh, 96vh);
+    overflow:auto;
+    padding:14px;
+    border-radius:18px;
+  }
+  .modalBack .modal.full #btnModalClose{
+    position:sticky; top:0;
+    margin-left:auto;
+    z-index:2;
+  }
+
+  /* --- Equipos quirúrgicos: lista simple --- */
+  .teamTools{display:flex;gap:10px;align-items:center;margin-top:8px}
+  .teamTools input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+  .teamList{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+  .teamCard{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden}
+  .teamHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 12px;background:linear-gradient(180deg, rgba(29,78,216,.06), rgba(29,78,216,0))}
+  .teamTitle{font-weight:900}
+  .teamMeta{font-size:12px;color:var(--muted);margin-top:4px}
+  .teamBtns{display:flex;align-items:center;gap:10px}
+  .teamBody{padding:10px 12px 12px 12px;border-top:1px solid var(--line)}
+  .memberItem{padding:10px 10px;border:1px solid var(--line);border-radius:14px;background:#fff}
+  .memberName{font-weight:800}
+  .memberSpec{font-size:12px;color:var(--muted);margin-top:2px}
+  .toggleBtn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;cursor:pointer;font-size:12px}
+
+
+  /* --- Columna derecha anclada (layout 1:1) --- */
+  @media(min-width: 980px){
+    .rightCol{position:sticky; top:12px; align-self:start; display:flex; flex-direction:column; gap:12px; height:calc(100vh - 24px); overflow:auto; padding-right:2px}
+  }
+  /* Equipos quirúrgicos: lista 1:1 con el menú (botones en .actions) */
+  #groupsPanelList .btn{
+    justify-content:space-between;
+    text-align:left;
+    white-space:normal;
+    line-height:1.2;
+    padding:10px 12px;
+  }
+  #groupsPanelList .btn .sub{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    font-weight:700;
+    margin-top:4px;
+  }
+
+
+  /* --- Ocultar acceso a Equipos Quirúrgicos (se carga en background) --- */
+  #btnOpenGroups{display:none !important}
+  #groupsSideBack, #groupsPanel{display:none !important}
+
+
+  /* --- Modal centrado compacto (info bloque) --- */
+  #modalBack{align-items:center !important; justify-content:center !important;}
+  #modalBack .modal{width:min(560px,92vw) !important; max-height:86vh; overflow:auto; background:var(--card) !important;}
+
+
+  /* --- Modal centrado (solo cuando está visible) + cerrar claro --- */
+  #modalBack.hide{display:none !important;}
+  #modalBack:not(.hide){
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+  }
+  #modalBack .modal{
+    width:min(560px, 92vw);
+    max-height:86vh;
+    overflow:auto;
+    margin:0;
+    background:var(--card);
+  }
+  .iconBtn{
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:12px;
+    padding:6px 10px;
+    cursor:pointer;
+    font-weight:900;
+    line-height:1;
+  }
+
+
+  /* --- Modal BLOQUE (minimalista, centrada, sin oscurecer) --- */
+  #modalBack.noDim{background:transparent !important;}
+  #modalBack.noDim.hide{display:none !important;}
+  #modalBack.noDim:not(.hide){
+    display:flex; align-items:center; justify-content:center;
+    padding:16px;
+  }
+  #modal.miniBlock{
+    width:min(420px, 92vw);
+    max-height:78vh;
+    overflow:auto;
+    border-radius:16px;
+  }
+  #modalTitle.blockTitle{
+    font-size:13px;
+    font-weight:800;
+    color:var(--muted);
+    margin:0;
+  }
+  .blkWrap{display:flex;flex-direction:column;gap:10px}
+  .blkGrid{display:grid;grid-template-columns: 120px minmax(0,1fr);gap:8px 10px}
+  .blkK{font-size:12px;color:var(--muted);font-weight:800}
+  .blkV{font-size:13px;color:var(--text);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .blkBtnRow{display:flex;justify-content:flex-end;gap:10px;margin-top:4px}
+
+
+  /* --- Modal centrado ligero (diálogo de bloque) --- */
+  #modalBack.hide{display:none !important;}
+  #modalBack:not(.hide){
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(15,23,42,.08); /* muy suave */
+  }
+  #modalBack .modal{
+    width:min(520px, 92vw);
+    max-height:86vh;
+    overflow:auto;
+    margin:0;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:0 18px 40px rgba(2,6,23,.18);
+  }
+  .iconBtn{
+    border:1px solid var(--line);
+    background:#fff;
+    border-radius:12px;
+    padding:6px 10px;
+    cursor:pointer;
+    font-weight:950;
+    line-height:1;
+  }
+  .iconBtn:hover{filter:brightness(.98)}
+  .dlgGrid{display:grid;grid-template-columns:120px minmax(0,1fr);gap:8px 10px;margin-top:10px}
+  .dlgK{font-size:12px;color:var(--muted);font-weight:800}
+  .dlgV{font-size:13px;color:var(--text);font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dlgActions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}
+
+
+  /* --- Centrado perfecto en escritorio --- */
+  #modalBack{
+    position:fixed !important;
+    inset:0 !important;
+  }
+  #modalBack:not(.hide){
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+  }
+
+
+  /* --- Evitar cortes en textos del diálogo --- */
+  .dlgV{white-space:normal !important; overflow:visible !important; text-overflow:clip !important;}
+  .dlgGrid{align-items:start;}
+
+
+  #swapModal.modal{
+    position:fixed;
+    inset:0;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    background:rgba(15,23,42,.08);
+    z-index:10000;
+  }
+  #swapModal .modalCard{
+    width:min(520px, 92vw);
+    max-height:86vh;
+    overflow:auto;
+    background:var(--card);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:0 18px 40px rgba(2,6,23,.18);
+    padding:14px;
+  }
+  #swapModal .modalTop{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:0;
+    border-bottom:1px solid var(--line);
+    margin-bottom:10px;
+    padding-bottom:10px;
+  }
+  #swapModal .modalTitle{font-weight:950}
+  #swapModal textarea{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    resize:vertical;
+  }
+  #swapModal .label{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
+
+
+  /* --- FIX centrado (desktop) para evitar "descuadre" --- */
+  #modalBack{
+    position:fixed !important;
+    left:0 !important; top:0 !important; right:0 !important; bottom:0 !important;
+    width:100vw !important;
+    height:100vh !important;
+    margin:0 !important;
+  }
+  #modalBack.hide{display:none !important;}
+  #modalBack:not(.hide){
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:18px !important;
+  }
+  #modalBack .modal{
+    position:relative !important;
+    left:auto !important;
+    right:auto !important;
+    transform:none !important;
+    margin:0 !important;
+  }
+
+  /* Diálogo Solicitud de cambio: centrado absoluto y consistente */
+  #swapModal.modal{
+    position:fixed !important;
+    left:0 !important; top:0 !important; right:0 !important; bottom:0 !important;
+    width:100vw !important;
+    height:100vh !important;
+    margin:0 !important;
+    display:none;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:18px !important;
+  }
+  #swapModal .modalCard{
+    margin:0 !important;
+    transform:none !important;
+  }
+
+
+  /* --- Swap modal (Solicitud de cambio) igual que diálogo --- */
+  #swapModal.modal{
+    position:fixed !important;
+    inset:0 !important;
+    display:none;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:18px !important;
+    background:rgba(15,23,42,.08) !important;
+    z-index:10000 !important;
+  }
+  #swapModal .modalCard{
+    width:min(520px, 92vw) !important;
+    max-height:86vh !important;
+    overflow:auto !important;
+    background:var(--card) !important;
+    border:1px solid var(--line) !important;
+    border-radius:16px !important;
+    box-shadow:0 18px 40px rgba(2,6,23,.18) !important;
+    padding:14px !important;
+    margin:0 !important;
+  }
+  #swapModal .modalTop{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    padding:0 0 10px 0;
+    border-bottom:1px solid var(--line);
+    margin:0 0 10px 0;
+  }
+  #swapModal .modalTitle{font-weight:950}
+  #swapModal .label{font-size:12px;color:var(--muted);font-weight:800;margin-bottom:6px}
+  #swapModal textarea{
+    width:100%;
+    padding:10px 12px;
+    border:1px solid var(--line);
+    border-radius:14px;
+    resize:vertical;
+  }
+
 </style>
 </head>
 
@@ -483,7 +800,7 @@
         <div class="logo"></div>
         <div>
           <h1>QuirófanosH9O</h1>
-          <small>Solicitud de quirófano + coordinación (perfil master)</small>
+          <small id="appSubtitle">Solicitud de quirófano</small>
         </div>
       </div>
 
@@ -549,6 +866,27 @@
       </div>
 
       <!-- RIGHT -->
+      <div class="rightCol">
+
+      <!-- Equipos quirúrgicos (panel derecho) -->
+      <div class="card hide" id="groupsPanel">
+        <div class="row" style="justify-content:space-between;align-items:center">
+          <h2 style="margin:0">Equipos quirúrgicos</h2>
+          <button class="btn small ghost" id="btnCloseGroupsPanel" type="button">Cerrar</button>
+        </div>
+
+        <div class="mut" id="groupsPanelCount" style="margin-top:6px">—</div>
+
+        <label style="margin-top:10px">Buscar</label>
+        <div class="row">
+          <input id="groupsPanelSearch" type="search" placeholder="Equipo, cirujano o especialidad…" />
+          <button class="btn small ghost" id="groupsPanelClear" type="button">Limpiar</button>
+        </div>
+
+        <div class="actions" id="groupsPanelList" style="margin-top:10px"></div>
+        <div id="groupsPanelEmpty" class="mut" style="margin-top:8px;display:none">No hay resultados.</div>
+      </div>
+
       <div class="card">
         <!-- USER: RESERVAR -->
         <div id="viewReserve" class="hide">
@@ -891,8 +1229,8 @@
 
   <!-- Modal -->
   <div id="modalBack" class="modalBack hide">
-    <div class="modal">
-      <button class="btn small ghost x" id="btnModalClose">Cerrar</button>
+    <div class="modal" id="modal">
+      <button class="iconBtn" id="btnModalClose" title="Cerrar" aria-label="Cerrar">✕</button>
       <h3 id="modalTitle">Detalle</h3>
       <div id="modalBody" class="msg"></div>
 
@@ -1003,8 +1341,14 @@
 
   function setSessionPill(){
     $("pillUser").textContent = S.emailVisible || "—";
-    $("pillRole").textContent = S.role || "—";
+    $("pillRole").textContent = (S.isMaster ? "Master" : "Usuario");
     $("btnLogout").classList.toggle("hide", !S.pin);
+
+    // Subtítulo dinámico
+    const sub = $("appSubtitle");
+    if(sub){
+      sub.textContent = S.isMaster ? "Solicitud de quirófano + coordinación" : "Solicitud de quirófano";
+    }
   }
   function hideAllViews(){
     ["viewWelcome","viewReserve","viewMine","viewGrid","viewStruct","viewWait","viewReport"]
@@ -1023,6 +1367,23 @@
     if(!m) return String(dateStr);
     return `${m[3]}/${m[2]}/${m[1]}`;
   }
+  function isoLocal(dateStr, hour){
+    // Devuelve ISO con offset local, p.ej. 2026-01-08T08:00:00+01:00
+    const d = new Date(`${dateStr}T${String(hour).padStart(2,"0")}:00:00`);
+    const pad = (n)=>String(Math.abs(n)).padStart(2,"0");
+    const off = -d.getTimezoneOffset(); // minutos, positivo en UTC+X
+    const sign = off>=0 ? "+" : "-";
+    const hh = pad(Math.floor(Math.abs(off)/60));
+    const mm = pad(Math.abs(off)%60);
+    const yyyy = d.getFullYear();
+    const mo = String(d.getMonth()+1).padStart(2,"0");
+    const da = String(d.getDate()).padStart(2,"0");
+    const H = String(d.getHours()).padStart(2,"0");
+    const M = String(d.getMinutes()).padStart(2,"0");
+    const S = String(d.getSeconds()).padStart(2,"0");
+    return `${yyyy}-${mo}-${da}T${H}:${M}:${S}${sign}${hh}:${mm}`;
+  }
+
 
   // menú: quitar parrilla a usuarios generales
   function setMenuButtons(){
@@ -1236,7 +1597,10 @@ function callGAS(fnName, args, opt){
       msg: "Validando acceso…",
       onSuccess: (doc)=>{
         S.pin = pin;
-        S.doctor = doc;
+        
+      // precarga equipos quirúrgicos (para botón de cambio en parrilla)
+      loadGroupsCache(true);
+S.doctor = doc;
         S.role = (doc.tipo === "Master") ? "Master" : "User";
         S.emailVisible = (doc.correo || doc.email || doc.mail || "—");
 
@@ -1595,6 +1959,26 @@ function callGAS(fnName, args, opt){
     };
   }
 
+  function buildBlockInfo(orName, eventId, ruleId){
+    // Devuelve {startHour, duration} buscando por eventId o, si falta, por ruleId
+    const g = S.lastGrid;
+    if(!g || !g.rows) return null;
+    const row = g.rows.find(r => r.orName === orName);
+    if(!row) return null;
+
+    let hours = [];
+    if(eventId){
+      hours = row.cells.filter(c => c.eventId === eventId).map(c => c.hour);
+    }
+    if(!hours.length && ruleId){
+      hours = row.cells.filter(c => c.ruleId === ruleId).map(c => c.hour);
+    }
+    if(!hours.length) return null;
+    hours.sort((a,b)=>a-b);
+    return { startHour: hours[0], duration: hours.length };
+  }
+
+
   function onGridCellClick(td){
     const status  = td.dataset.status;
     const orName  = td.dataset.orName;
@@ -1623,6 +2007,7 @@ function callGAS(fnName, args, opt){
 
   // ===== MODAL =====
   function openModalBase(title, bodyHtml){
+    setBlockModal(false);
     $("modalTitle").textContent = title;
     $("modalBody").innerHTML = bodyHtml;
     $("modalForm").classList.add("hide");
@@ -1631,6 +2016,115 @@ function callGAS(fnName, args, opt){
     $("modalBack").classList.remove("hide");
   }
 
+  function setBlockModal(on){
+    const mb = $("modalBack");
+    const modal = $("modal");
+    const title = $("modalTitle");
+    if(!mb || !modal || !title) return;
+
+    mb.classList.toggle("noDim", !!on);
+    modal.classList.toggle("miniBlock", !!on);
+    title.classList.toggle("blockTitle", !!on);
+  }
+
+  function teamFromLabel(label){
+    const raw = String(label||"").trim();
+    if(!raw) return "";
+    let t = raw.replace(/^E\b[\s:_-]*/i, "").trim();
+    t = t.replace(/\s+/g," ").trim();
+    return t;
+  }
+
+  function swapButtonForTeam(team, ctx){
+    if(!team) return "";
+    // construir diccionario de equipos
+    const byTeam = {};
+    (S.groupsCache||[]).forEach(g=>{
+      const tt = String(g.equipo||"").trim();
+      if(!tt) return;
+      if(!byTeam[tt]) byTeam[tt]=[];
+      byTeam[tt].push(g);
+    });
+
+    let match = byTeam[team] ? team : null;
+    if(!match){
+      const key = normalizeEquipoKey(team);
+      match = Object.keys(byTeam).find(t => normalizeEquipoKey(t) === key) || null;
+    }
+    if(!match){
+      if(!S.groupsLoaded) return `<div class="mut">Cargando equipo…</div>`;
+      return "";
+    }
+
+    const members = (byTeam[match]||[]).slice();
+    members.sort((a,b)=>{
+      const na = (a.cirujano || a.nombre || "").toString();
+      const nb = (b.cirujano || b.nombre || "").toString();
+      return na.localeCompare(nb,"es");
+    });
+
+    const first = members[0] || {};
+    const firstName = String(first.cirujano || first.nombre || "—").trim();
+
+    const emailObj = members.find(x=>String(x.correo||x.email||"").trim());
+    const hasEmail = !!String((emailObj && (emailObj.correo||emailObj.email)) || "").trim();
+
+    if(!hasEmail){
+      return `<div class="mut">Equipo <b>${escapeHtml(match)}</b> sin email en GruposQuirúrgicos.</div>`;
+    }
+
+    // guarda contexto y crea botón
+    S.selectedCellContext = ctx || null;
+    return `
+      <div class="blkGrid" style="margin-top:6px">
+        <div class="blkK">Equipo</div><div class="blkV">${escapeHtml(match)}</div>
+        <div class="blkK">Contacto</div><div class="blkV">${escapeHtml(firstName)}</div>
+      </div>
+      <div class="blkBtnRow">
+        <button type="button" class="btn good" id="btnAskSwapFromBlock" data-team="${escapeHtml(match)}">Pedir cambio</button>
+      </div>
+    `;
+  }
+
+  function openBlockModal(ctx, titleText){
+    // precarga si hace falta
+    if(!S.groupsLoaded) loadGroupsCache(true);
+
+    setBlockModal(true);
+
+    const t = titleText || "Bloque";
+    const date = ctx.dateStr ? fmtDMY(ctx.dateStr) : "";
+    const orName = ctx.orName || "";
+    const h = (ctx.startHour!=null ? String(ctx.startHour) : (ctx.hour!=null ? String(ctx.hour) : ""));
+    const dur = (ctx.hours!=null ? String(ctx.hours) : (ctx.duration!=null ? String(ctx.duration) : ""));
+    const label = ctx.label || "";
+
+    const body = `
+      <div class="blkWrap">
+        <div class="blkGrid">
+          <div class="blkK">Fecha</div><div class="blkV">${escapeHtml(date||"—")}</div>
+          <div class="blkK">Quirófano</div><div class="blkV">${escapeHtml(orName||"—")}</div>
+          ${h ? `<div class="blkK">Hora</div><div class="blkV">${escapeHtml(h)}:00</div>` : ``}
+          ${dur ? `<div class="blkK">Duración</div><div class="blkV">${escapeHtml(dur)} h</div>` : ``}
+          ${label ? `<div class="blkK">Etiqueta</div><div class="blkV">${escapeHtml(label)}</div>` : ``}
+        </div>
+        <div id="blkSwapArea">${swapButtonForTeam(teamFromLabel(label), ctx) || ""}</div>
+      </div>
+    `;
+
+    openModalBase(t, body);
+
+    // wire button if present
+    const btn = $("btnAskSwapFromBlock");
+    if(btn){
+      btn.onclick = ()=>{
+        const team = (btn.getAttribute("data-team") || "").trim();
+        openSwapModal(team, ctx || null);
+      };
+    }
+  }
+
+
   function closeModal(){
     S.modalCtx = null;
     $("modalBack").classList.add("hide");
@@ -1638,62 +2132,73 @@ function callGAS(fnName, args, opt){
   }
 
   function openModalInfo(ctx){
-      // Modal informativo (sin acciones). Para usuarios no master: ver qué hay y a qué equipo pertenece.
-      const g = S.lastGrid;
-      const row = g?.rows?.find(r => r.orName === ctx.orName);
-      const idx = Number.isFinite(ctx.cellIndex) ? ctx.cellIndex : 0;
+  // Diálogo centrado: información del bloque + (usuario) pedir cambio + (master) acciones
+  if(!S.groupsLoaded) loadGroupsCache(true);
 
-      let title = "Detalle";
-      let body = "";
+  const title = "Detalle del bloque";
+  const startHour = (ctx.startHour!=null ? ctx.startHour : ctx.hour);
+  const hh = (startHour!=null ? String(startHour).padStart(2,"0")+":00" : "—");
+  const startISO = ctx.startISO || (ctx.dateStr && startHour!=null ? isoLocal(ctx.dateStr, startHour) : "");
 
-      if(ctx.status === "FREE"){
-        title = "Hueco libre";
-        body = `
-Hueco libre
+  // Normalizar contexto para acciones master existentes
+  S.modalCtx = Object.assign({}, ctx, {
+    startHour,
+    startISO,
+    hours: (ctx.hours!=null ? ctx.hours : (ctx.inferredHours!=null ? ctx.inferredHours : 1))
+  });
+  S.selectedCellContext = S.modalCtx;
 
-Fecha: ${fmtDMY(ctx.dateStr)}
-Quirófano: ${ctx.orName}
-Hora: ${String(ctx.hour).padStart(2,"0")}:00
-        `;
-      } else if(ctx.status === "STRUCT" || ctx.status === "NON"){
-        const kindTxt = (ctx.status === "STRUCT") ? "Bloque estructural" : "Bloque NO estructural";
-        title = kindTxt;
+  const isStruct = (ctx.kind === "STRUCT" || ctx.isStructural === true || String(ctx.label||"").trim().toUpperCase().startsWith("E "));
 
-        // Inferir inicio y duración
-        let startHour = ctx.hour;
-        let hours = 1;
-        if(row && ctx.eventId){
-          let i = idx;
-          while(i > 0 && row.cells[i-1]?.eventId === ctx.eventId) i--;
-          startHour = row.cells[i]?.hour ?? ctx.hour;
-          hours = inferEventHoursInRow_(row, i);
-        } else if(row && ctx.eventId){
-          const blk = buildEventBlockInfo(ctx.orName, ctx.eventId);
-          if(blk){ startHour = blk.startHour; hours = blk.duration; }
-        }
+  const baseInfo = `
+    <div class="dlgGrid">
+      <div class="dlgK">Fecha</div><div class="dlgV">${escapeHtml(fmtDMY(ctx.dateStr)||"—")}</div>
+      <div class="dlgK">Quirófano</div><div class="dlgV">${escapeHtml(ctx.orName||"—")}</div>
+      <div class="dlgK">Hora</div><div class="dlgV">${escapeHtml(hh)}</div>
+      <div class="dlgK">Duración</div><div class="dlgV">${escapeHtml(String(S.modalCtx.hours))} h</div>
+      <div class="dlgK">Etiqueta</div><div class="dlgV">${escapeHtml(ctx.label||"—")}</div>
+    </div>
+  `;
 
-        body = `
-${kindTxt}
+  const swapSection = groupInfoHtmlForLabel(ctx.label) || `<div class="mut" style="margin-top:10px">No se ha encontrado equipo para esta etiqueta.</div>`;
 
-Fecha: ${fmtDMY(ctx.dateStr)}
-Quirófano: ${ctx.orName}
-Inicio de bloque: ${String(startHour).padStart(2,"0")}:00
-Duración estimada: ${hours} h
-Etiqueta: ${ctx.label || "(sin etiqueta)"}
-        `;
-      } else {
-        title = "Detalle de celda";
-        body = `
-Fecha: ${fmtDMY(ctx.dateStr)}
-Quirófano: ${ctx.orName}
-Hora: ${String(ctx.hour).padStart(2,"0")}:00
-        `;
-      }
+  const masterSection = isMaster() ? `
+    <div class="card" style="margin-top:12px">
+      <div class="mut" style="font-weight:800;margin-bottom:8px">Acciones de coordinación</div>
+      <div class="dlgActions" style="justify-content:flex-start;flex-wrap:wrap">
+        <button class="btn bad" id="mCancelOcc" type="button">${isStruct ? "Cancelar solo este bloque" : "Eliminar este bloque"}</button>
+        <button class="btn" id="mEditOcc" type="button">Editar este bloque</button>
+      </div>
+      <div id="mMsg" class="mut" style="margin-top:10px"></div>
+    </div>
+  ` : ``;
 
-      // Añadir info de equipo si coincide con etiqueta
-      const extra = groupInfoHtmlForLabel(ctx.label);
-      openModalBase(title, escapeHtml(body) + extra);
-    }
+  openModalBase(title, baseInfo + swapSection + masterSection);
+
+  // Botón solicitar cambio (usuario)
+  const btn = $("btnAskSwapFromBlock");
+  if(btn){
+    btn.onclick = ()=>{
+      const team = (btn.getAttribute("data-team")||"").trim();
+      openSwapModal(team, S.selectedCellContext || ctx || null);
+    };
+  }
+
+  // Acciones MASTER (reutiliza funciones existentes)
+  if(isMaster()){
+    const msg = $("mMsg");
+
+    $("mEditOcc").onclick = ()=>{
+      if(isStruct) prepareEditStructBlock();
+      else prepareEditNonStructBlock();
+    };
+
+    $("mCancelOcc").onclick = ()=>{
+      if(isStruct) cancelStructBlock();
+      else deleteNonStructBlock();
+    };
+  }
+}
 
   function openModalFree(ctx){
     const body = `
@@ -1704,62 +2209,28 @@ Hora: ${String(ctx.hour).padStart(2,"0")}:00
       (Solo consulta desde la parrilla)
     `;
     openModalBase("Hueco libre", escapeHtml(body));
+    wireAskSwapButton(ctx);
   }
 
   function openModalNonStruct(ctx){
     const g = S.lastGrid;
     const row = g?.rows?.find(r => r.orName === ctx.orName);
     const idx = Number.isFinite(ctx.cellIndex) ? ctx.cellIndex : 0;
-
     const inferredHours = row ? inferEventHoursInRow_(row, idx) : 1;
 
+    // calcular startHour real del bloque dentro de la fila (si ocupa varias celdas)
     let startHour = ctx.hour;
     if(row && ctx.eventId){
       let i = idx;
       while(i > 0 && row.cells[i-1]?.eventId === ctx.eventId) i--;
       startHour = row.cells[i]?.hour ?? ctx.hour;
     }
+    ctx.kind = "NONSTRUCT";
+    ctx.inferredHours = inferredHours;
+    ctx.startHour = startHour;
+    ctx.startISO = ctx.startISO || isoLocal(ctx.dateStr, startHour);
 
-    const startISO = `${ctx.dateStr}T${String(startHour).padStart(2,"0")}:00:00`;
-
-    S.modalCtx = {
-      mode: null,
-      kind: "NON",
-      dateStr: ctx.dateStr,
-      orName: ctx.orName,
-      eventId: ctx.eventId,
-      label: ctx.label,
-      startHour,
-      hours: inferredHours,
-      startISO
-    };
-
-    const body = `
-Bloque NO estructural
-
-Fecha: ${fmtDMY(ctx.dateStr)}
-Quirófano: ${ctx.orName}
-Inicio de bloque: ${String(startHour).padStart(2,"0")}:00
-Duración estimada: ${inferredHours} h
-Etiqueta: ${ctx.label || "(sin etiqueta)"}
-EventId: ${ctx.eventId || "(no disponible)"}
-    `;
-    openModalBase("Bloque NO estructural", escapeHtml(body));
-
-    const actions = $("modalActions");
-    actions.innerHTML = "";
-
-    const btnDelete = document.createElement("button");
-    btnDelete.className = "btn bad";
-    btnDelete.textContent = "Eliminar este quirófano NO estructural";
-    btnDelete.onclick = ()=>deleteNonStructBlock();
-    actions.appendChild(btnDelete);
-
-    const btnEdit = document.createElement("button");
-    btnEdit.className = "btn good";
-    btnEdit.textContent = "Editar este quirófano NO estructural";
-    btnEdit.onclick = ()=>prepareEditNonStructBlock();
-    actions.appendChild(btnEdit);
+    openModalInfo(ctx);
   }
 
   function deleteNonStructBlock(){
@@ -1802,68 +2273,28 @@ EventId: ${ctx.eventId || "(no disponible)"}
     $("mfHint").textContent = "Editarás SOLO este bloque NO estructural (mismo EventId).";
   }
 
+  
   function openModalStruct(ctx){
-    const blk = buildEventBlockInfo(ctx.orName, ctx.eventId);
-    if(!blk){
-      const body = `
-        Bloque estructural\n
-        Fecha: ${fmtDMY(ctx.dateStr)}\n
-        Quirófano: ${ctx.orName}\n
-        Hora seleccionada: ${String(ctx.hour).padStart(2,"0")}:00\n
-        (No se ha podido reconstruir el bloque completo)
-      `;
-      openModalBase("Bloque estructural", escapeHtml(body));
-      return;
+    ctx.kind = "STRUCT";
+    ctx.isStructural = true;
+
+    const info = buildBlockInfo(ctx.orName, ctx.eventId || "", ctx.ruleId || "");
+    if(info){
+      ctx.startHour = info.startHour;
+      ctx.hour = info.startHour;
+      ctx.hours = info.duration;
+      ctx.startISO = ctx.startISO || (ctx.dateStr ? isoLocal(ctx.dateStr, info.startHour) : "");
+    }else{
+      // fallback mínimo
+      const h = (ctx.startHour!=null ? ctx.startHour : ctx.hour);
+      ctx.startISO = ctx.startISO || (ctx.dateStr && h!=null ? isoLocal(ctx.dateStr, h) : "");
+      ctx.hours = ctx.hours || 1;
     }
 
-    const startISO = `${ctx.dateStr}T${String(blk.startHour).padStart(2,"0")}:00:00`;
-
-    S.modalCtx = {
-      mode: null,
-      kind: "STRUCT",
-      dateStr: ctx.dateStr,
-      orName: ctx.orName,
-      eventId: ctx.eventId,
-      ruleId: ctx.ruleId,
-      label: ctx.label,
-      startHour: blk.startHour,
-      hours: blk.duration,
-      startISO
-    };
-
-    const body = `
-Bloque estructural
-
-Fecha: ${fmtDMY(ctx.dateStr)}
-Quirófano: ${ctx.orName}
-Inicio de bloque: ${String(blk.startHour).padStart(2,"0")}:00
-Duración estimada: ${blk.duration} h
-Etiqueta: ${ctx.label || "(sin etiqueta)"}
-RuleId: ${ctx.ruleId || "(no disponible)"}
-    `;
-    openModalBase("Bloque estructural", escapeHtml(body));
-
-    const actions = $("modalActions");
-    actions.innerHTML = "";
-
-    const btnCancel = document.createElement("button");
-    btnCancel.className = "btn bad";
-    btnCancel.textContent = "Cancelar quirófano (solo este bloque)";
-    btnCancel.onclick = ()=>cancelStructBlock();
-    actions.appendChild(btnCancel);
-
-    const btnEditBlock = document.createElement("button");
-    btnEditBlock.className = "btn good";
-    btnEditBlock.textContent = "Editar quirófano (solo este bloque)";
-    btnEditBlock.onclick = ()=>prepareEditStructBlock();
-    actions.appendChild(btnEditBlock);
-
-    const btnEditSeries = document.createElement("button");
-    btnEditSeries.className = "btn primary";
-    btnEditSeries.textContent = "Editar toda la serie";
-    btnEditSeries.onclick = ()=>editWholeSeriesFromRule();
-    actions.appendChild(btnEditSeries);
+    openModalInfo(ctx);
   }
+
+
 
   function cancelStructBlock(){
     if(!S.modalCtx || !S.modalCtx.eventId) return;
@@ -2266,6 +2697,8 @@ function loadGroupsCache(force){
       });
       S.groupsByEquipo = map;
       S.groupsLoaded = true;
+      if(typeof S.__afterGroupsLoad === 'function'){ try{ S.__afterGroupsLoad(); }catch(e){} }
+
     },
     onFailure:(_)=>{
       S.groupsCache = [];
@@ -2275,258 +2708,22 @@ function loadGroupsCache(force){
   });
 }
 
-function openGroupsModal(){
-  if(!S.pin){
-    return showMsg($("msgGrid"), "Debes entrar primero con tu PIN.", "warn");
+  function wireAskSwapButton(ctx){
+    // Guarda contexto para el email (fecha/quirófano/hora etc.)
+    S.selectedCellContext = ctx || null;
+
+    const btn = $("btnAskSwapFromBlock");
+    if(!btn) return;
+
+    btn.onclick = ()=>{
+      const team = (btn.getAttribute("data-team") || "").trim();
+      if(!team) return;
+      openSwapModal(team, ctx || null);
+    };
   }
 
-  // Modal base: buscador + contenedor scrollable
-  const baseHtml = `
-    <div class="groupsWrap">
-      <div class="groupsTools">
-        <input id="groupsSearch" type="text" placeholder="Buscar equipo, cirujano, especialidad, email o teléfono…" />
-        <button class="btn" id="groupsClear" type="button">Limpiar</button>
-      </div>
-      <div id="groupsCount" class="groupsCount">Cargando equipos quirúrgicos…</div>
-      <div id="groupsList" class="groupsList"></div>
-    </div>
-  `;
-  openModalBase("Equipos quirúrgicos", baseHtml);
 
-  // Helpers locales
-  const render = (groups, q)=>{
-    const query = normalizeStr(q||"");
-    const byTeam = {};
-    (groups||[]).forEach(g=>{
-      const k = normalizeEquipoKey(g.equipo);
-      if(!k) return;
-      if(!byTeam[k]) byTeam[k] = [];
-      byTeam[k].push(g);
-    });
-
-    let teams = Object.keys(byTeam).sort((a,b)=>a.localeCompare(b,"es"));
-    // Filtrado: equipo o cualquiera de sus miembros
-    if(query){
-      teams = teams.filter(team=>{
-        if(normalizeStr(team).includes(query)) return true;
-        const members = byTeam[team] || [];
-        return members.some(m=>{
-          const hay = [
-            m.cirujano, m.nombre,
-            m.especialidad,
-            m.correo, m.email,
-            m.telefono, m.teléfono
-          ].map(x=>normalizeStr(x)).join(" ");
-          return hay.includes(query);
-        });
-      });
-    }
-
-    const listEl = $("groupsList");
-    const countEl = $("groupsCount");
-    if(!listEl || !countEl) return;
-
-    const totalTeams = Object.keys(byTeam).length;
-    const shownTeams = teams.length;
-    countEl.textContent = query
-      ? `Mostrando ${shownTeams} de ${totalTeams} equipos (filtro: "${q}")`
-      : `Equipos: ${totalTeams} — usa el buscador para filtrar`;
-
-    if(!teams.length){
-      listEl.innerHTML = `<div class="msg warn">No hay resultados con ese filtro.</div>`;
-      return;
-    }
-
-    const html = teams.map(team=>{
-      const members = (byTeam[team] || []).slice();
-      members.sort((a,b)=>{
-        const na = (a.cirujano || a.nombre || "").toString();
-        const nb = (b.cirujano || b.nombre || "").toString();
-        return na.localeCompare(nb,"es");
-      });
-
-      // Primer email válido del equipo (para el botón)
-      const firstEmail = (members.find(x=>{
-        const e = (x.correo || x.email || "").toString().trim();
-        return !!e;
-      }) || {}).correo || (members.find(x=>{
-        const e = (x.correo || x.email || "").toString().trim();
-        return !!e;
-      }) || {}).email || "";
-
-      const rows = members.map(mem=>{
-        const cir = escapeHtml(mem.cirujano || mem.nombre || "—");
-        const esp = escapeHtml(mem.especialidad || "—");
-        return `
-          <div class="gRow">
-            <div><b>${cir}</b></div>
-            <div class="mut">${esp}</div>
-          </div>
-        `;
-      }).join("");
-
-      const canMail = String(firstEmail||"").trim();
-      const mailBtn = canMail
-        ? `<button type="button" class="btn btnSmall gMailBtn" data-email="${escapeHtml(canMail)}" title="Abrir tu cliente de correo">Pedir cambio</button>`
-        : `<span class="mut" title="No hay email en la hoja para este equipo">Sin email</span>`;
-
-      return `
-        <details class="gTeam">
-          <summary>
-            <div class="gTeamHead">
-              <div class="gTeamTitle">${escapeHtml(team)}</div>
-              <div class="gTeamRight">
-                ${mailBtn}
-                <div class="badge">${members.length}</div>
-              </div>
-            </div>
-          </summary>
-          <div class="gMembers">${rows}</div>
-        </details>
-      `;
-    }).join("");
-
-    listEl.innerHTML = html;
-
-    
-// --- Solicitud de cambio: modal + envío directo (Apps Script) ---
-let __swapTeam = "";
-let __swapContext = null;
-
-function openSwapModal(team, context){
-  __swapTeam = String(team||"").trim();
-  __swapContext = (context && typeof context === "object") ? context : null;
-
-  const modal = document.getElementById("swapModal");
-  const comment = document.getElementById("swapComment");
-  const status = document.getElementById("swapStatus");
-  if(!modal || !comment || !status) return;
-
-  comment.value = "";
-  status.textContent = "";
-
-  modal.style.display = "flex";
-  comment.focus();
-
-  const close = ()=>{ modal.style.display = "none"; };
-  document.getElementById("swapCloseBtn")?.addEventListener("click", close, { once:true });
-  document.getElementById("swapCancelBtn")?.addEventListener("click", close, { once:true });
-
-  document.getElementById("swapSendBtn")?.addEventListener("click", async ()=>{
-    try{
-      status.textContent = "Enviando...";
-      const payload = {
-        pin: S.pin,
-        equipo: __swapTeam,
-        comment: comment.value || "",
-        context: __swapContext || {}
-      };
-
-      // Si estamos en GAS: google.script.run
-      if (typeof google !== "undefined" && google.script && google.script.run){
-        google.script.run
-          .withSuccessHandler((res)=>{
-            if(res && res.ok){
-              status.textContent = "✅ Solicitud enviada a " + (res.to || "");
-              setTimeout(()=>{ modal.style.display = "none"; }, 800);
-            } else {
-              status.textContent = "❌ No se pudo enviar.";
-            }
-          })
-          .withFailureHandler((err)=>{
-            status.textContent = "❌ " + (err?.message || String(err||"Error"));
-          })
-          .requestSwapToTeam(payload.pin, payload.equipo, payload.comment, payload.context);
-        return;
-      }
-
-      // Si estamos en GitHub/Worker: llamada fetch al Worker (si existe API_WORKER_URL y endpoint)
-      if (typeof API_WORKER_URL !== "undefined" && API_WORKER_URL){
-        const r = await fetch(API_WORKER_URL, {
-          method: "POST",
-          headers: { "Content-Type":"application/json" },
-          body: JSON.stringify({ fn:"requestSwapToTeam", args:[payload.pin, payload.equipo, payload.comment, payload.context] })
-        });
-        const data = await r.json();
-        if(data && data.ok){
-          status.textContent = "✅ Solicitud enviada a " + (data.to || "");
-          setTimeout(()=>{ modal.style.display = "none"; }, 800);
-        } else {
-          status.textContent = "❌ " + (data?.error || "No se pudo enviar.");
-        }
-        return;
-      }
-
-      status.textContent = "❌ No hay canal de envío disponible (GAS/Worker).";
-    }catch(e){
-      status.textContent = "❌ " + (e?.message || String(e));
-    }
-  }, { once:true });
-}
-
-// Botón por equipo: abre modal
-listEl.querySelectorAll(".gMailBtn").forEach(btn=>{
-  btn.addEventListener("click", (ev)=>{
-    ev.preventDefault();
-    ev.stopPropagation();
-    const team = btn.closest(".gTeam")?.querySelector(".gTeamTitle")?.textContent || "";
-    openSwapModal(team, S.selectedCellContext || null);
-  }, { capture:false });
-});
-
-  };
-
-  const wireSearch = (groups)=>{
-    const inp = $("groupsSearch");
-    const clr = $("groupsClear");
-    if(inp){
-      inp.oninput = ()=>{
-        render(groups, inp.value || "");
-      };
-      // foco por comodidad
-      setTimeout(()=>{ try{ inp.focus(); }catch(_){} }, 50);
-    }
-    if(clr){
-      clr.onclick = ()=>{
-        if(inp) inp.value = "";
-        render(groups, "");
-      };
-    }
-  };
-
-  callGAS("listSurgicalGroups", [S.pin], {
-    key:"listGroupsModal",
-    msg:"Cargando equipos quirúrgicos…",
-    onSuccess:(res)=>{
-      const groups = (res && res.groups) ? res.groups : [];
-      S.groupsCache = groups;
-
-      // refresca cache global para el panel de "info de bloque"
-      const map = {};
-      groups.forEach(g=>{
-        const k = normalizeEquipoKey(g.equipo);
-        if(!k) return;
-        if(!map[k]) map[k] = [];
-        map[k].push(g);
-      });
-      S.groupsByEquipo = map;
-      S.groupsLoaded = true;
-
-      wireSearch(groups);
-      render(groups, $("groupsSearch") ? $("groupsSearch").value : "");
-    },
-    onFailure:(_)=>{
-      S.groupsCache = [];
-      S.groupsByEquipo = {};
-      S.groupsLoaded = true;
-      const countEl = $("groupsCount");
-      const listEl = $("groupsList");
-      if(countEl) countEl.textContent = "No se han podido cargar los equipos quirúrgicos.";
-      if(listEl) listEl.innerHTML = `<div class="msg bad">No hay datos en la hoja GruposQuirúrgicos o no se ha podido cargar.</div>`;
-      wireSearch([]);
-    }
-  });
-}
+function openGroupsModal(){ /* oculto */ }
 
 function normalizeStr(value){
   let s = String(value||"").trim().toLowerCase();
@@ -2548,30 +2745,53 @@ function normalizeEquipoKey(value){
 }
 
 function groupInfoHtmlForLabel(label){
-  const key = normalizeEquipoKey(label);
-  if(!key) return "";
-  const arr = (S.groupsByEquipo && S.groupsByEquipo[key]) ? S.groupsByEquipo[key] : null;
-  if(!arr || !arr.length) return "";
+  // Esperado: "E COTA" -> "COTA"
+  const raw = String(label||"").trim();
+  if(!raw) return "";
 
-  const members = arr.slice();
-  members.sort((a,b)=> String(a.nombre||"").localeCompare(String(b.nombre||""),"es"));
+  let team = raw.replace(/^E\b[\s:_-]*/i, "").trim();
+  team = team.replace(/\s+/g, " ").trim();
+  if(!team) return "";
 
-  const membersHtml = members.map(m=>{
-    const nombre = escapeHtml(m.nombre||"");
-    const esp    = escapeHtml(m.especialidad||"");
-    const correo = escapeHtml(m.correo||"");
-    const tel    = escapeHtml(m.telefono||"");
-    const line2 = [esp, correo, tel].filter(Boolean).join(" · ");
-    return `<div style="margin-top:8px">
-      <div><b>${nombre || "&nbsp;"}</b>${esp?` <span class="muted">(${esp})</span>`:""}</div>
-      <div class="muted" style="font-size:12px">${[correo, tel].filter(Boolean).join(" · ") || "&nbsp;"}</div>
-    </div>`;
-  }).join("");
+  const byTeam = {};
+  (S.groupsCache||[]).forEach(g=>{
+    const t = String(g.equipo||"").trim();
+    if(!t) return;
+    if(!byTeam[t]) byTeam[t]=[];
+    byTeam[t].push(g);
+  });
 
-  return `<div style="margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--softAcc)">
-    <div style="margin-bottom:4px"><b>Equipo quirúrgico:</b> ${escapeHtml(key)}</div>
-    ${membersHtml}
-  </div>`;
+  let match = byTeam[team] ? team : null;
+  if(!match){
+    const key = normalizeEquipoKey(team);
+    match = Object.keys(byTeam).find(t => normalizeEquipoKey(t) === key) || null;
+  }
+
+  if(!match){
+    if(!S.groupsLoaded) return `<div class="mut" style="margin-top:10px">Cargando equipo…</div>`;
+    return "";
+  }
+
+  const members = (byTeam[match]||[]).slice();
+  members.sort((a,b)=>String(a.cirujano||a.nombre||"").localeCompare(String(b.cirujano||b.nombre||""),"es"));
+  const first = members[0] || {};
+  const firstName = String(first.cirujano || first.nombre || "—").trim();
+  const firstSpec = String(first.especialidad || "").trim();
+
+  const emailObj = members.find(x=>String(x.correo||x.email||"").trim());
+  const hasEmail = !!String((emailObj && (emailObj.correo||emailObj.email)) || "").trim();
+
+  const btn = hasEmail
+    ? `<div class="dlgActions"><button type="button" class="btn good" id="btnAskSwapFromBlock" data-team="${escapeHtml(match)}">Pedir cambio</button></div>`
+    : `<div class="mut" style="margin-top:10px">Equipo <b>${escapeHtml(match)}</b> sin email en GruposQuirúrgicos.</div>`;
+
+  return `
+    <div class="dlgGrid">
+      <div class="dlgK">Equipo</div><div class="dlgV">${escapeHtml(match)}</div>
+      <div class="dlgK">Contacto</div><div class="dlgV">${escapeHtml(firstName)}${firstSpec ? " · "+escapeHtml(firstSpec) : ""}</div>
+    </div>
+    ${btn}
+  `;
 }
 // ===== NO ESTRUCTURALES DESDE MASTER (búsqueda de huecos) =====
   function buildDoctorSelectForMaster(){
@@ -3142,33 +3362,110 @@ function groupInfoHtmlForLabel(label){
     $("btnModalClose").onclick = closeModal;
     $("btnModalApply").onclick = applyModalChanges;
   });
+
+// --- Solicitud de cambio: modal + envío directo (Apps Script) ---
+let __swapTeam = "";
+let __swapContext = null;
+
+function openSwapModal(team, context){
+  __swapTeam = String(team||"").trim();
+  __swapContext = (context && typeof context === "object") ? context : null;
+
+  const modal = document.getElementById("swapModal");
+  const comment = document.getElementById("swapComment");
+  const status = document.getElementById("swapStatus");
+  if(!modal || !comment || !status) return;
+
+  comment.value = "";
+  status.textContent = "";
+  modal.style.display = "flex";
+  comment.focus();
+
+  const close = ()=>{ modal.style.display = "none"; };
+  document.getElementById("swapCloseBtn")?.addEventListener("click", close, { once:true });
+  document.getElementById("swapCancelBtn")?.addEventListener("click", close, { once:true });
+
+  document.getElementById("swapSendBtn")?.addEventListener("click", async ()=>{
+    try{
+      status.textContent = "Enviando...";
+      const payload = {
+        pin: S.pin,
+        equipo: __swapTeam,
+        comment: comment.value || "",
+        context: __swapContext || {}
+      };
+
+      // GAS
+      if (typeof google !== "undefined" && google.script && google.script.run){
+        google.script.run
+          .withSuccessHandler((res)=>{
+            if(res && res.ok){
+              status.textContent = "✅ Solicitud enviada a " + (res.to || "");
+              setTimeout(()=>{ modal.style.display = "none"; }, 800);
+            } else {
+              status.textContent = "❌ No se pudo enviar.";
+            }
+          })
+          .withFailureHandler((err)=>{
+            status.textContent = "❌ " + (err?.message || String(err||"Error"));
+          })
+          .requestSwapToTeam(payload.pin, payload.equipo, payload.comment, payload.context);
+        return;
+      }
+
+      // Worker (si está configurado)
+      if (typeof API_WORKER_URL !== "undefined" && API_WORKER_URL){
+        const r = await fetch(API_WORKER_URL, {
+          method: "POST",
+          headers: { "Content-Type":"application/json" },
+          body: JSON.stringify({ fn:"requestSwapToTeam", args:[payload.pin, payload.equipo, payload.comment, payload.context] })
+        });
+        const data = await r.json();
+        if(data && data.ok){
+          status.textContent = "✅ Solicitud enviada a " + (data.to || "");
+          setTimeout(()=>{ modal.style.display = "none"; }, 800);
+        } else {
+          status.textContent = "❌ " + (data?.error || "No se pudo enviar.");
+        }
+        return;
+      }
+
+      status.textContent = "❌ No hay canal de envío disponible (GAS/Worker).";
+    }catch(e){
+      status.textContent = "❌ " + (e?.message || String(e));
+    }
+  }, { once:true });
+}
+
 </script>
 
 <!-- Modal: Solicitud de cambio -->
+
 <div id="swapModal" class="modal" style="display:none">
   <div class="modalCard">
     <div class="modalTop">
       <div class="modalTitle">Solicitud de cambio</div>
-      <button class="iconBtn" id="swapCloseBtn" title="Cerrar">✕</button>
+      <button class="iconBtn" id="swapCloseBtn" title="Cerrar" aria-label="Cerrar">✕</button>
     </div>
 
-    <div class="mut" style="margin-top:6px">
+    <div class="mut" style="margin-top:2px">
       Se enviará un correo al primer miembro del equipo seleccionado. Incluye tu nombre, correo y teléfono.
     </div>
 
-    <div style="margin-top:12px">
+    <div style="margin-top:10px">
       <div class="label">Comentario (opcional)</div>
       <textarea id="swapComment" rows="5" placeholder="Ej.: Necesito cambiar por incompatibilidad de horario, preferiría por la tarde, etc."></textarea>
     </div>
 
-    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:12px">
-      <button class="btn" id="swapCancelBtn" type="button">Cancelar</button>
-      <button class="btn primary" id="swapSendBtn" type="button">Enviar solicitud</button>
-    </div>
-
     <div id="swapStatus" class="mut" style="margin-top:10px"></div>
+
+    <div class="dlgActions" style="margin-top:12px">
+      <button class="btn ghost" id="swapCancelBtn" type="button">Cancelar</button>
+      <button class="btn good" id="swapSendBtn" type="button">Enviar solicitud</button>
+    </div>
   </div>
 </div>
+
 
 </body>
 </html>
