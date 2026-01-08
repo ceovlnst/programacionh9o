@@ -790,6 +790,186 @@
     resize:vertical;
   }
 
+
+  /* --- Chapa y pintura: diálogo de bloque más simple --- */
+  #modalTitle:empty{display:none;}
+  .dlgGrid.compact{grid-template-columns:92px minmax(0,1fr); gap:6px 10px; margin-top:6px;}
+  .dlgGrid.compact .dlgK{font-size:12px;}
+  .dlgGrid.compact .dlgV{font-size:13px; font-weight:850;}
+  .dlgSection{margin-top:10px; padding-top:10px; border-top:1px solid var(--line);}
+  .dlgFooter{margin-top:14px; padding-top:12px; border-top:1px solid var(--line);}
+
+
+  /* --- Compactar diálogo de bloque --- */
+  .dlgSection{margin-top:8px; padding-top:8px;}
+  .dlgFooter{margin-top:10px; padding-top:10px;}
+  .dlgActions{gap:8px;}
+  .dlgGrid.compact{margin-bottom:6px;}
+
+
+  /* --- Ultra compacto: reducir espacios y separadores --- */
+  #modalBack .modal .modalBody{padding:14px !important;}
+  .dlgSection{margin-top:8px !important; padding-top:0 !important; border-top:none !important;}
+  .dlgFooter{margin-top:12px !important; padding-top:0 !important; border-top:none !important;}
+  .dlgGrid.compact{gap:6px 12px !important;}
+  .dlgK{line-height:1.2;}
+  .dlgV{line-height:1.25;}
+
+
+  /* --- Centrar texto en diálogo --- */
+  #modalBack .modal .modalBody { text-align: center; }
+  .dlgGrid.compact { justify-items: center; }
+  .dlgGrid.compact .dlgK { text-align: right; }
+  .dlgGrid.compact .dlgV { text-align: left; }
+  @media (max-width: 640px){
+    .dlgGrid.compact .dlgK,
+    .dlgGrid.compact .dlgV { text-align: center; }
+  }
+
+
+  /* --- Master: evitar cortes y apelotonamiento --- */
+  #modal.wide{ width:min(920px, 94vw) !important; }
+  #modalForm{ text-align:left; }
+  #modalForm label{ display:block; font-size:12px; color:var(--muted); font-weight:800; margin-bottom:6px;}
+  #modalForm input, #modalForm select{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px 12px;
+    background:#fff;
+  }
+  #modalForm .actions{ display:flex; justify-content:flex-end; gap:10px; }
+  #modalForm .hint{ color:var(--muted); font-size:12px; line-height:1.25; }
+
+
+  /* --- Master: formulario más ordenado y compacto --- */
+  #modalForm{ text-align:left; }
+  #modalForm .formGrid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap:10px 12px;
+    margin-top:2px;
+  }
+  #modalForm .field{ min-width:0; }
+  #modalForm .span2{ grid-column: 1 / -1; }
+  #modalForm label{
+    display:block;
+    font-size:12px;
+    color:var(--muted);
+    font-weight:800;
+    margin:0 0 6px 0;
+  }
+  #modalForm input, #modalForm select{
+    width:100%;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:10px 12px;
+    background:#fff;
+  }
+  #modalForm .hint{
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.25;
+  }
+  #modalForm .actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+    margin-top:12px;
+  }
+  #modalForm .msg{ margin-top:10px; }
+
+
+  /* --- Master: modal ancho sin cortes --- */
+  #modal.wide{ width:min(920px, 94vw) !important; max-height:86vh !important; }
+  #modal.wide .modalBody{ max-height:calc(86vh - 40px) !important; overflow:auto !important; }
+
+
+  /* --- Master: modo edición inline dentro del mismo diálogo --- */
+  #blockView.hide{display:none !important;}
+  #modalForm.hide{display:none !important;}
+  #modalForm{ margin-top:10px; }
+
+
+  /* --- Master: botones siempre visibles en edición --- */
+  #modalForm .actions{
+    position: sticky;
+    bottom: 0;
+    background: var(--card);
+    padding-top: 10px;
+  }
+
+
+  /* --- Fix: botones edición visibles --- */
+  #modalActions.actions{
+    display:flex !important;
+    justify-content:flex-end !important;
+    gap:10px !important;
+    margin-top:12px !important;
+  }
+  #modalForm{ padding-bottom:6px; }
+
+
+  #modal.wide .modalBody{ padding-bottom:18px !important; }
+
+
+  /* --- Master: diálogo ultra discreto --- */
+  .masterMini{ padding:10px !important; margin-top:8px !important; }
+  .masterMini .dlgActions{ margin:0 !important; }
+  .masterMini .btn{ padding:8px 12px !important; border-radius:14px !important; }
+  #modalBack .modal{ width:min(520px, 92vw) !important; }
+
+
+  /* --- Evitar que el modal quede cortado por arriba --- */
+  #modalBack{
+    align-items:center !important;
+    justify-content:center !important;
+    padding:18px !important;
+  }
+  #modal{
+    margin:0 !important;
+    max-height:calc(100vh - 36px) !important;
+  }
+  #modal .modalBody{
+    max-height:calc(100vh - 110px) !important;
+    overflow:auto !important;
+  }
+
+
+  /* --- Modal compacto sin scroll innecesario --- */
+  #modalBack{
+    position:fixed !important;
+    inset:0 !important;
+    display:flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    padding:18px !important;
+  }
+  #modal{
+    max-height:calc(100vh - 36px) !important;
+    overflow:visible !important;
+  }
+  #modal .modalBody{
+    overflow:visible !important;
+    max-height:none !important;
+  }
+  .miniLines{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    text-align:center;
+    padding:4px 0;
+  }
+  .miniLine{
+    font-size:13px;
+    font-weight:850;
+  }
+  .miniSub{
+    font-size:12px;
+    font-weight:700;
+    color:var(--muted);
+  }
+
 </style>
 </head>
 
@@ -1230,50 +1410,48 @@
   <!-- Modal -->
   <div id="modalBack" class="modalBack hide">
     <div class="modal" id="modal">
-      <button class="iconBtn" id="btnModalClose" title="Cerrar" aria-label="Cerrar">✕</button>
+      
       <h3 id="modalTitle">Detalle</h3>
       <div id="modalBody" class="msg"></div>
 
-      <div id="modalForm" class="mgrid hide" style="margin-top:10px">
-        <div>
-          <label>Acción</label>
-          <select id="mfAction" disabled>
-            <option value="STRUCT_EDIT_BLOCK">Editar bloque estructural</option>
-            <option value="NON_EDIT">Editar bloque NO estructural</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Duración (h)</label>
-          <select id="mfHours">
-            <option>1</option><option>2</option><option>3</option><option>4</option>
-            <option>5</option><option>6</option><option>7</option><option>8</option>
-            <option>9</option><option>10</option><option>11</option><option>12</option>
-          </select>
-        </div>
-
-        <div>
-          <label>Etiqueta</label>
-          <input id="mfLabel" placeholder="Ej: MASTER / Equipo / Servicio" />
-        </div>
-
-        <div>
-          <label>Quirófano</label>
-          <select id="mfOr"></select>
-        </div>
-
-        <div class="full">
-          <div class="hint" id="mfHint"></div>
-        </div>
-
-        <div class="full actions">
-          <button class="btn good" id="btnModalApply">Aplicar cambios</button>
-        </div>
-      </div>
-
-      <div id="modalActions" class="actions"></div>
-      <div id="modalMsg" class="msg hide"></div>
+      
+<div id="modalForm" class="hide" style="margin-top:10px">
+  <div class="formGrid">
+    <div class="field hide" id="mfActionWrap">
+      <label>Acción</label>
+      <select id="mfAction" disabled>
+        <option value="STRUCT_EDIT_BLOCK">Editar bloque estructural</option>
+        <option value="NON_EDIT">Editar bloque NO estructural</option>
+      </select>
     </div>
+
+    <div class="field">
+      <label>Duración (h)</label>
+      <select id="mfHours">
+        <option>1</option><option>2</option><option>3</option><option>4</option>
+        <option>5</option><option>6</option><option>7</option><option>8</option>
+        <option>9</option><option>10</option><option>11</option><option>12</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Quirófano</label>
+      <select id="mfOr"></select>
+    </div>
+
+    <div class="field span2">
+      <label>Etiqueta</label>
+      <input id="mfLabel" placeholder="Ej: E COLO / COLO / MASTER" />
+    </div>
+
+    <div class="field span2 hint" id="mfHint"></div>
+  </div>
+
+  <div id="modalActions" class="actions"></div>
+  <div id="modalMsg" class="msg hide"></div>
+</div>
+
+</div>
   </div>
 
   <!-- Loading -->
@@ -2127,20 +2305,20 @@ S.doctor = doc;
 
   function closeModal(){
     S.modalCtx = null;
-    $("modalBack").classList.add("hide");
+    
+    $("modal").classList.remove("wide");
+    $("modalForm").classList.add("hide");
+$("modalBack").classList.add("hide");
     hideMsg($("modalMsg"));
   }
 
   function openModalInfo(ctx){
-  // Diálogo centrado: información del bloque + (usuario) pedir cambio + (master) acciones
   if(!S.groupsLoaded) loadGroupsCache(true);
 
-  const title = "Detalle del bloque";
+  const title = "";
   const startHour = (ctx.startHour!=null ? ctx.startHour : ctx.hour);
-  const hh = (startHour!=null ? String(startHour).padStart(2,"0")+":00" : "—");
   const startISO = ctx.startISO || (ctx.dateStr && startHour!=null ? isoLocal(ctx.dateStr, startHour) : "");
 
-  // Normalizar contexto para acciones master existentes
   S.modalCtx = Object.assign({}, ctx, {
     startHour,
     startISO,
@@ -2149,50 +2327,61 @@ S.doctor = doc;
   S.selectedCellContext = S.modalCtx;
 
   const isStruct = (ctx.kind === "STRUCT" || ctx.isStructural === true || String(ctx.label||"").trim().toUpperCase().startsWith("E "));
+  const h = (startHour!=null ? startHour : 0);
+  const dur = Number(S.modalCtx.hours||1);
+  const endHour = (h + dur);
+  const hh = String(h).padStart(2,"0")+":00";
+  const eh = String(endHour).padStart(2,"0")+":00";
 
-  const baseInfo = `
-    <div class="dlgGrid">
-      <div class="dlgK">Fecha</div><div class="dlgV">${escapeHtml(fmtDMY(ctx.dateStr)||"—")}</div>
-      <div class="dlgK">Quirófano</div><div class="dlgV">${escapeHtml(ctx.orName||"—")}</div>
-      <div class="dlgK">Hora</div><div class="dlgV">${escapeHtml(hh)}</div>
-      <div class="dlgK">Duración</div><div class="dlgV">${escapeHtml(String(S.modalCtx.hours))} h</div>
-      <div class="dlgK">Etiqueta</div><div class="dlgV">${escapeHtml(ctx.label||"—")}</div>
+  const dmy = fmtDMY(ctx.dateStr) || "—";
+  const orName = ctx.orName || "—";
+
+  const sum = getTeamContactSummary(ctx.label);
+  const team = sum.team || (String(ctx.label||"").trim().replace(/^E\b[\s:_-]*/i,"").trim()) || "—";
+  const contact = sum.contact || "—";
+  const canAskSwap = !!(S.groupsLoaded && sum.team && (S.groupsCache||[]).some(g=>String(g.equipo||"").trim()===sum.team && String(g.correo||g.email||"").trim()));
+
+  // guardar para pedir cambio
+  S._swapTeamFromBlock = canAskSwap ? sum.team : "";
+
+  const lines = `
+    <div class="miniLines">
+      <div class="miniLine">${escapeHtml(dmy)} · ${escapeHtml(orName)} · ${escapeHtml(hh)}–${escapeHtml(eh)} <span class="miniSub">(${dur} h)</span></div>
+      <div class="miniLine">Equipo: ${escapeHtml(team)}</div>
+      <div class="miniLine">Contacto: ${escapeHtml(contact)}</div>
     </div>
   `;
 
-  const swapSection = groupInfoHtmlForLabel(ctx.label) || `<div class="mut" style="margin-top:10px">No se ha encontrado equipo para esta etiqueta.</div>`;
-
-  const masterSection = isMaster() ? `
-    <div class="card" style="margin-top:12px">
-      <div class="mut" style="font-weight:800;margin-bottom:8px">Acciones de coordinación</div>
-      <div class="dlgActions" style="justify-content:flex-start;flex-wrap:wrap">
-        <button class="btn bad" id="mCancelOcc" type="button">${isStruct ? "Cancelar solo este bloque" : "Eliminar este bloque"}</button>
-        <button class="btn" id="mEditOcc" type="button">Editar este bloque</button>
-      </div>
-      <div id="mMsg" class="mut" style="margin-top:10px"></div>
+  const masterMini = isMaster() ? `
+    <div class="dlgActions" style="justify-content:center;margin-top:10px">
+      <button class="btn bad" id="mCancelOcc" type="button">${isStruct ? "Cancelar solo este bloque" : "Eliminar este bloque"}</button>
     </div>
+    <div id="mMsg" class="mut" style="margin-top:8px;text-align:center"></div>
   ` : ``;
 
-  openModalBase(title, baseInfo + swapSection + masterSection);
+  const footer = `
+    <div class="dlgFooter" style="margin-top:12px">
+      <div class="dlgActions" style="justify-content:center;flex-wrap:wrap">
+        <button class="btn ghost" id="btnCloseBottom" type="button">Cerrar</button>
+        <button class="btn good" id="btnAskSwapFooter" type="button" ${S._swapTeamFromBlock ? "" : "disabled"}>Pedir cambio</button>
+      </div>
+    </div>
+  `;
 
-  // Botón solicitar cambio (usuario)
-  const btn = $("btnAskSwapFromBlock");
-  if(btn){
-    btn.onclick = ()=>{
-      const team = (btn.getAttribute("data-team")||"").trim();
-      openSwapModal(team, S.selectedCellContext || ctx || null);
+  openModalBase(title, lines + masterMini + footer);
+
+  $("btnCloseBottom").onclick = ()=>closeModal();
+
+  const bswap = $("btnAskSwapFooter");
+  if(bswap){
+    bswap.onclick = ()=>{
+      const t = (S._swapTeamFromBlock||"").trim();
+      if(!t) return;
+      openSwapModal(t, S.selectedCellContext || ctx || null);
     };
   }
 
-  // Acciones MASTER (reutiliza funciones existentes)
   if(isMaster()){
-    const msg = $("mMsg");
-
-    $("mEditOcc").onclick = ()=>{
-      if(isStruct) prepareEditStructBlock();
-      else prepareEditNonStructBlock();
-    };
-
     $("mCancelOcc").onclick = ()=>{
       if(isStruct) cancelStructBlock();
       else deleteNonStructBlock();
@@ -2329,7 +2518,14 @@ S.doctor = doc;
 
     $("modalForm").classList.remove("hide");
 
-    const mfOr = $("mfOr");
+    $("modal").classList.add("wide");
+    
+    // Entrar en modo edición "inline" (oculta vista y muestra formulario)
+    const bv = $("blockView");
+    if(bv) bv.classList.add("hide");
+    const bClose = $("btnCloseBottom"); if(bClose) bClose.classList.add("hide");
+    const bSwap = $("btnAskSwapFooter"); if(bSwap) bSwap.classList.add("hide");
+const mfOr = $("mfOr");
     mfOr.innerHTML = "";
     OR_LIST.forEach(o=>{
       const opt = document.createElement("option");
@@ -2706,7 +2902,31 @@ function loadGroupsCache(force){
       S.groupsLoaded = true;
     }
   });
-}
+
+    // Botones (Aplicar / Cancelar)
+    $("modalActions").innerHTML = `
+      <button class="btn ghost" id="mfCancelBtn" type="button">Cancelar</button>
+      <button class="btn good" id="mfApplyBtn" type="button">Aplicar cambios</button>
+    `;
+    const hint = $("mfHint");
+    if(hint) hint.textContent = 'Se aplican cambios solo a este bloque (ocurrencia). No modifica la serie.';
+
+    $("mfCancelBtn").onclick = ()=>{
+
+      // Salir de modo edición
+      const bv = $("blockView");
+      if(bv) bv.classList.remove("hide");
+      const bClose = $("btnCloseBottom"); if(bClose) bClose.classList.remove("hide");
+      const bSwap = $("btnAskSwapFooter"); if(bSwap) bSwap.classList.remove("hide");
+      $("modalForm").classList.add("hide");
+      $("modal").classList.remove("wide");
+      $("modalActions").innerHTML = "";
+      hideMsg($("modalMsg"));
+    };
+
+    $("mfApplyBtn").onclick = ()=>applyModalChanges();
+
+  }
 
   function wireAskSwapButton(ctx){
     // Guarda contexto para el email (fecha/quirófano/hora etc.)
@@ -2743,6 +2963,44 @@ function normalizeEquipoKey(value){
   s = s.replace(/^E\s+/i, "");
   return s.toUpperCase();
 }
+
+  function getTeamContactSummary(label){
+    const raw = String(label||"").trim();
+    if(!raw) return { team:"", contact:"" };
+    let team = raw.replace(/^E\b[\s:_-]*/i, "").trim().replace(/\s+/g," ");
+    if(!team) return { team:"", contact:"" };
+
+    const byTeam = {};
+    (S.groupsCache||[]).forEach(g=>{
+      const t = String(g.equipo||"").trim();
+      if(!t) return;
+      (byTeam[t] ||= []).push(g);
+    });
+
+    let match = byTeam[team] ? team : null;
+    if(!match){
+      const key = normalizeEquipoKey(team);
+      match = Object.keys(byTeam).find(t => normalizeEquipoKey(t) === key) || null;
+    }
+    if(!match){
+      return { team, contact: S.groupsLoaded ? "" : "Cargando…" };
+    }
+
+    const members = (byTeam[match]||[]).slice();
+    // Prefer administrador si existe (columna Rol)
+    members.sort((a,b)=>{
+      const ra = String(a.rol||"").toLowerCase() === "administrador" ? 0 : 1;
+      const rb = String(b.rol||"").toLowerCase() === "administrador" ? 0 : 1;
+      if(ra!==rb) return ra-rb;
+      return String(a.cirujano||a.nombre||"").localeCompare(String(b.cirujano||b.nombre||""),"es");
+    });
+    const first = members[0] || {};
+    const name = String(first.cirujano || first.nombre || "").trim();
+    const spec = String(first.especialidad || "").trim();
+    const contact = (name ? name : "") + (spec ? " · "+spec : "");
+    return { team: match, contact };
+  }
+
 
 function groupInfoHtmlForLabel(label){
   // Esperado: "E COTA" -> "COTA"
@@ -3445,7 +3703,7 @@ function openSwapModal(team, context){
   <div class="modalCard">
     <div class="modalTop">
       <div class="modalTitle">Solicitud de cambio</div>
-      <button class="iconBtn" id="swapCloseBtn" title="Cerrar" aria-label="Cerrar">✕</button>
+      
     </div>
 
     <div class="mut" style="margin-top:2px">
