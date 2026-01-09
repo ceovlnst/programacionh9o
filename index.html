@@ -1062,6 +1062,95 @@ details[open] .gTeamChevron{ transform: rotate(180deg); transition:.15s ease; }
     color:var(--muted);
   }
 
+
+/* === Reporte visual compacto === */
+.structReportScroll{ overflow-x:auto; padding-bottom:6px; }
+.structReportTable{ width:max-content; border-collapse:separate; border-spacing:0; }
+.structReportTable th, .structReportTable td{ border:1px solid rgba(148,163,184,.35); padding:6px; vertical-align:top; }
+.structReportTable thead th{ position:sticky; top:0; background:var(--card); z-index:2; }
+.structReportTable .srLoc{ left:0; z-index:3; position:sticky; }
+.structReportTable .srLocCell{ position:sticky; left:0; background:var(--card); z-index:1; font-weight:700; min-width:160px; }
+.structReportTable .srDay{ text-align:center; min-width:240px; }
+.structReportTable .srSess{ text-align:center; width:120px; font-size:12px; opacity:.9; }
+.srDayTop{ font-weight:800; }
+.srDayKey{ font-size:11px; opacity:.75; margin-top:2px; }
+.srCell{ min-width:120px; }
+.srCellStack{ display:flex; flex-direction:column; gap:4px; }
+.srEmpty{ font-size:12px; opacity:.6; padding:2px 0; }
+.srCard{ width:100%; border:0; text-align:left; padding:6px 8px; border-radius:10px; background:#16a34a; color:#fff; cursor:pointer; }
+.srCard:hover{ filter:brightness(0.95); }
+.srCardTop{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
+.srLabel{ font-weight:800; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
+.srTime{ font-size:12px; opacity:.95; white-space:nowrap; }
+
+
+/* ===== STRUCT REPORT COMPACT STYLES ===== */
+.srWrap{ overflow-x:auto; border:1px solid #ddd; border-radius:10px; padding:8px; background:#fff; }
+.srGrid{
+  display:grid;
+  grid-template-columns: 180px repeat(14, minmax(92px, 1fr));
+  gap:6px;
+  align-items:start;
+}
+.srHead{ font-weight:700; text-align:center; background:#f3f4f6; padding:6px 4px; border-radius:8px; }
+.srLocHead{ position:sticky; left:0; z-index:3; background:#f3f4f6; }
+.srSubHead{ font-size:12px; text-align:center; background:#fafafa; padding:4px 0; border-radius:8px; }
+.srLocHead2{ position:sticky; left:0; z-index:2; background:#fafafa; }
+.srLoc{
+  position:sticky; left:0; z-index:1;
+  background:#ffffff;
+  border:1px solid #eee;
+  border-radius:10px;
+  padding:8px 10px;
+  font-weight:700;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+.srCell{ min-height:44px; border:1px dashed #e5e7eb; border-radius:10px; padding:4px; }
+.srCell.srEmpty{ background:#fcfcfd; }
+.srCard{
+  width:100%;
+  border:0;
+  background:#2e7d32;
+  color:#fff;
+  border-radius:10px;
+  padding:6px 8px;
+  margin:0 0 4px 0;
+  cursor:pointer;
+  text-align:left;
+  line-height:1.1;
+}
+.srCard:hover{ filter:brightness(1.05); }
+.srCardTop{ display:flex; justify-content:space-between; gap:8px; align-items:center; }
+.srLabel{ font-weight:800; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.srTime{ font-size:11px; opacity:.95; white-space:nowrap; }
+.srMore{ font-size:11px; color:#6b7280; padding:2px 4px; }
+.srModalBackdrop{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.25);
+  display:flex;
+  align-items:center; justify-content:center;
+}
+.srModalBackdrop.hide{ display:none; }
+.srModal{
+  width:min(360px, 92vw);
+  background:#fff;
+  border-radius:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);
+  padding:12px 14px;
+}
+.srModalRow{ display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.srModalTitle{ font-weight:800; font-size:14px; }
+.srModalCloseX{
+  border:0; background:#f3f4f6;
+  border-radius:10px;
+  width:34px; height:34px;
+  cursor:pointer;
+}
+.srModalBody{ margin-top:8px; font-size:13px; }
+.srModalActions{ margin-top:10px; display:flex; justify-content:flex-end; }
+
 </style>
 </head>
 
@@ -1567,7 +1656,7 @@ details[open] .gTeamChevron{ transform: rotate(180deg); transition:.15s ease; }
 
   const S = {
     pin: null,
-    role: null,           // "Master" | "User"
+    role: null,           // "Master" | "Usuario"
     doctor: null,
     emailVisible: null,
 
@@ -1630,7 +1719,7 @@ details[open] .gTeamChevron{ transform: rotate(180deg); transition:.15s ease; }
     hideAllViews();
     $(viewId).classList.remove("hide");
   }
-  function isMaster(){ return S.role === "Master"; }
+  function isMaster(){ return S.role === "Master" || S.role === "Administrador"; }
 
   // ===== FECHAS: SIEMPRE MOSTRAR DD/MM/AAAA EN TEXTO =====
   function fmtDMY(dateStr){ // "YYYY-MM-DD" -> "DD/MM/YYYY"
@@ -1874,8 +1963,9 @@ function callGAS(fnName, args, opt){
       // precarga equipos quirúrgicos (para botón de cambio en parrilla)
       loadGroupsCache(true);
 S.doctor = doc;
-        S.isMaster = (doc.tipo === "Master");
-        S.role = (doc.tipo === "Master") ? "Master" : "User";
+        const tipo = String(doc.tipo || doc.rol || "").trim();
+        S.isMaster = /^(master|administrador|admin)$/i.test(tipo) || tipo.toLowerCase().includes("admin");
+        S.role = S.isMaster ? "Administrador" : "Usuario";
         S.emailVisible = (doc.correo || doc.email || doc.mail || "—");
 
         setSessionPill();
@@ -3186,6 +3276,17 @@ function normalizeStr(value){
   return s;
 }
 
+function escapeHtml(input){
+  const s = String(input ?? "");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
 function normalizeEquipoKey(value){
   let s = String(value||"").trim();
   if(!s) return "";
@@ -3668,19 +3769,33 @@ function groupInfoHtmlForLabel(label){
     });
   }
 
+  
+  // ===== STRUCT VISUAL REPORT (COMPACT) =====
+  // Expects GAS: getStructuralProgramReport(pin) -> can return any of:
+  //  A) { locations:[{ orName, byDaySession:{ L:{morning:[...], afternoon:[...]}, ... } , responsablesByTeam? }] }
+  //  B) { rows:[{ orName, day, session, label, start, end, time, responsable }] }
+  //  C) { blocks:[...] }  (alias)
+  // Renderer is defensive and will try to adapt.
+
   function generateStructVisualReport(){
     hideMsg($("msgReport"));
     const box = $("structVisualReport");
-    box.classList.add("hide");
+    box.classList.remove("hide");
     box.innerHTML = "";
 
     callGAS("getStructuralProgramReport", [S.pin], {
       key:"structReport",
       msg:"Generando reporte visual…",
       onSuccess:(res)=>{
-        renderStructVisualReport(res);
+        try{
+          renderStructVisualReport(res);
+        }catch(err){
+          console.error(err);
+          showMsg($("msgReport"), "Error renderizando el reporte: " + (err?.message||String(err)), "bad");
+        }
       },
       onFailure:(e)=>{
+        console.error(e);
         showMsg($("msgReport"), e?.message || String(e), "bad");
       }
     });
@@ -3688,81 +3803,324 @@ function groupInfoHtmlForLabel(label){
 
   function renderStructVisualReport(data){
     const box = $("structVisualReport");
+    box.classList.remove("hide");
     box.innerHTML = "";
-    if(!data || !data.byDaySession){
-      box.classList.add("hide");
-      showMsg($("msgReport"), "Sin datos de estructurales.", "warn");
+
+    const rows = normalizeStructReportRows(data);
+    if(!rows.length){
+      showMsg($("msgReport"), "No hay bloques estructurales para mostrar en este rango/criterio.", "warn");
       return;
     }
-    box.classList.remove("hide");
 
-    const daysOrder = ["L","M","X","J","V","S","D"];
-    const dayName = {L:"Lunes",M:"Martes",X:"Miércoles",J:"Jueves",V:"Viernes",S:"Sábado",D:"Domingo"};
-
-    const table = document.createElement("table");
-    const thead = document.createElement("thead");
-    thead.innerHTML = "<tr><th>Día</th><th>Sesión</th><th>Bloques</th></tr>";
-    table.appendChild(thead);
-    const tbody = document.createElement("tbody");
-
-    daysOrder.forEach(d=>{
-      const sessions = data.byDaySession[d];
-      if(!sessions) return;
-
-      ["AM","PM","MIXED"].forEach(sess=>{
-        const list = sessions[sess] || [];
-        const tr = document.createElement("tr");
-        const tdDay = document.createElement("td");
-        tdDay.textContent = dayName[d] + (sess === "AM" ? " (mañana)" : sess === "PM" ? " (tarde)" : " (mixta)");
-        const tdSess = document.createElement("td");
-        tdSess.textContent = (sess === "AM" ? "Mañana" : sess === "PM" ? "Tarde" : "Mixta");
-        const tdBlocks = document.createElement("td");
-
-        if(!list.length){
-          tdBlocks.textContent = "—";
-        } else {
-          list.forEach(r=>{
-            const div = document.createElement("div");
-            div.className = "rchip struct";
-            const womTxt = r.weeksOfMonth && r.weeksOfMonth.length
-              ? `Semanas: ${r.weeksOfMonth.join(",")}`
-              : "";
-            const occTxt = r.occPerMonth ? ` (${r.occPerMonth}×/mes)` : "";
-            div.innerHTML = `
-              <b>${escapeHtml(r.orName)} – ${escapeHtml(r.label || "")}</b>
-              <small>
-                ${String(r.startHour).padStart(2,"0")}:00 · ${r.durationHours} h · ${escapeHtml(r.cadenceNameEs || r.cadenceMode || "")}${occTxt}
-                ${womTxt ? " · "+escapeHtml(womTxt) : ""}
-              </small>
-            `;
-            tdBlocks.appendChild(div);
-          });
-        }
-
-        tr.appendChild(tdDay);
-        tr.appendChild(tdSess);
-        tr.appendChild(tdBlocks);
-        tbody.appendChild(tr);
+    // Group by location -> day -> session
+    const map = new Map(); // loc -> { L:{morning:[],afternoon:[]}, ... }
+    rows.forEach(r=>{
+      const loc = String(r.orName||r.location||"").trim() || "—";
+      const day = normalizeDayKey(r.day);
+      const sess = normalizeSessionKey(r.session);
+      if(!map.has(loc)){
+        map.set(loc, {L:{morning:[],afternoon:[]},M:{morning:[],afternoon:[]},X:{morning:[],afternoon:[]},J:{morning:[],afternoon:[]},V:{morning:[],afternoon:[]},S:{morning:[],afternoon:[]},D:{morning:[],afternoon:[]}});
+      }
+      const cell = map.get(loc)[day][sess];
+      cell.push({
+        label: r.label || r.team || r.group || r.equipo || "—",
+        time: r.time || r.range || r.horario || formatTimeRange(r),
+        responsable: r.responsable || r.admin || r.administrator || r.responsible || ""
       });
     });
 
-    table.appendChild(tbody);
-    box.appendChild(table);
+    const dayOrder = ["L","M","X","J","V","S","D"];
+    const dayName = {L:"Lunes", M:"Martes", X:"Miércoles", J:"Jueves", V:"Viernes", S:"Sábado", D:"Domingo"};
+    const sessName = {morning:"Mañana", afternoon:"Tarde"};
+
+    // Build table-like grid with sticky location column + scroll horizontal
+    const wrap = document.createElement("div");
+    wrap.className = "srWrap";
+    const grid = document.createElement("div");
+    grid.className = "srGrid";
+
+    // Header row: empty cell for location + day headers spanning 2 cols
+    grid.appendChild(makeCell("srHead srLocHead", "Ubicación"));
+    dayOrder.forEach(d=>{
+      const h = makeCell("srHead", dayName[d]);
+      h.style.gridColumn = "span 2";
+      grid.appendChild(h);
+    });
+
+    // Second header: empty under location + sessions
+    grid.appendChild(makeCell("srSubHead srLocHead2", ""));
+    dayOrder.forEach(_d=>{
+      grid.appendChild(makeCell("srSubHead", "M"));
+      grid.appendChild(makeCell("srSubHead", "T"));
+    });
+
+    // Rows per location
+    [...map.keys()].sort((a,b)=>a.localeCompare(b,"es")).forEach(loc=>{
+      // location cell
+      const locCell = makeCell("srLoc", loc);
+      grid.appendChild(locCell);
+
+      dayOrder.forEach(d=>{
+        ["morning","afternoon"].forEach(sess=>{
+          const cell = document.createElement("div");
+          cell.className = "srCell";
+
+          const items = map.get(loc)[d][sess];
+          if(items && items.length){
+            items.slice(0,6).forEach(it=>{
+              const btn = document.createElement("button");
+              btn.type = "button";
+              btn.className = "srCard";
+              btn.innerHTML = `<div class="srCardTop"><span class="srLabel">${escapeHtml(it.label || "—")}</span></div>`;
+              btn.onclick = ()=>{
+                openStructReportBlockModal({
+                  location: loc,
+                  day: dayName[d],
+                  session: sessName[sess],
+                  label: it.label,
+                  responsable: it.responsable || "—"
+                });
+              };
+              cell.appendChild(btn);
+            });
+
+            if(items.length>6){
+              const more = document.createElement("div");
+              more.className = "srMore";
+              more.textContent = `+${items.length-6} más`;
+              cell.appendChild(more);
+            }
+          }else{
+            cell.classList.add("srEmpty");
+          }
+          grid.appendChild(cell);
+        });
+      });
+    });
+
+    wrap.appendChild(grid);
+    box.appendChild(wrap);
+
+    // Ensure modal exists once
+    ensureStructReportModal();
   }
 
-  // ===== ESCAPES =====
-  function escapeHtml(str){
-    return String(str || "").replace(/[&<>"']/g, s=>{
-      if(s === "&") return "&amp;";
-      if(s === "<") return "&lt;";
-      if(s === ">") return "&gt;";
-      if(s === '"') return "&quot;";
-      if(s === "'") return "&#39;";
-      return s;
+  function normalizeStructReportRows(data){
+    if(!data) return [];
+    if(Array.isArray(data.rows)) return data.rows;
+    if(Array.isArray(data.blocks)) return data.blocks;
+    if(Array.isArray(data.items)) return data.items;
+
+    // locations format
+    if(Array.isArray(data.locations)){
+      const out = [];
+      data.locations.forEach(loc=>{
+        const orName = loc.orName || loc.location || loc.name;
+        const bds = loc.byDaySession || loc.byDay || loc.grid;
+        if(!bds) return;
+        Object.keys(bds).forEach(dayKey=>{
+          const dayObj = bds[dayKey] || {};
+          ["morning","afternoon"].forEach(sess=>{
+            const arr = dayObj[sess] || dayObj[sess==="morning"?"M":"T"] || [];
+            if(!Array.isArray(arr)) return;
+            arr.forEach(it=>{
+              out.push({
+                orName,
+                day: dayKey,
+                session: sess,
+                label: it.label || it.team || it.group || it.equipo,
+                time: it.time || it.range || it.horario,
+                responsable: it.responsable || it.admin || it.administrator || it.responsible
+              });
+            });
+          });
+        });
+      });
+      return out;
+    }
+
+    // byDaySession without locations (single or global)
+    // Supports GAS format: byDaySession[day] = { AM:[], PM:[], MIXED:[] } and each item may include orName, label, startHour, durationHours
+    if(data.byDaySession){
+      const out=[];
+      const bds=data.byDaySession || {};
+      const pad2 = (n)=> String(n).padStart(2,"0");
+      const fmtHour = (hFloat)=>{
+        const h = Math.floor(Number(hFloat)||0);
+        const m = Math.round(((Number(hFloat)||0) - h)*60);
+        return `${pad2(h)}:${pad2(m)}`;
+      };
+      const sessMap = { "AM":"morning", "PM":"afternoon", "MIXED":"mixed", "M":"morning", "T":"afternoon" };
+
+      Object.keys(bds).forEach(dayKey=>{
+        const dayObj=bds[dayKey]||{};
+        Object.keys(dayObj).forEach(rawSess=>{
+          const arr = dayObj[rawSess];
+          if(!Array.isArray(arr)) return;
+          const sess = sessMap[String(rawSess).toUpperCase()] || String(rawSess).toLowerCase();
+          arr.forEach(it=>{
+            const orName = it.orName || it.location || it.or || data.orName || data.location || "—";
+            const label = it.label || it.team || it.group || it.equipo;
+            let time = it.time || it.range || it.horario;
+
+            if(!time){
+              const sh = (it.startHour ?? it.start ?? it.startH);
+              const dur = (it.durationHours ?? it.duration ?? it.durH);
+              if(sh != null && dur != null){
+                const end = Number(sh) + Number(dur);
+                time = `${fmtHour(sh)}–${fmtHour(end)}`;
+              }
+            }
+
+            out.push({
+              orName,
+              day: dayKey,
+              session: sess,
+              label,
+              time,
+              responsable: it.responsable || it.admin || it.administrator || it.responsible || it.owner
+            });
+          });
+        });
+      });
+      return out;
+    }return [];
+  }
+
+  function normalizeDayKey(day){
+    const d = String(day ?? "").trim();
+    // allow 0-6, Mon.., L/M/X/J/V/S/D
+    const map = {
+      "0":"D","6":"S","5":"V","4":"J","3":"X","2":"M","1":"L",
+      "lun":"L","lunes":"L","mon":"L","monday":"L",
+      "mar":"M","martes":"M","tue":"M","tuesday":"M",
+      "mié":"X","mie":"X","miércoles":"X","miercoles":"X","wed":"X","wednesday":"X",
+      "jue":"J","jueves":"J","thu":"J","thursday":"J",
+      "vie":"V","viernes":"V","fri":"V","friday":"V",
+      "sáb":"S","sab":"S","sábado":"S","sabado":"S","sat":"S","saturday":"S",
+      "dom":"D","domingo":"D","sun":"D","sunday":"D",
+      "l":"L","m":"M","x":"X","j":"J","v":"V","s":"S","d":"D"
+    };
+    const k = normalizeStr(d).replace(/\./g,"");
+    return map[k] || (["L","M","X","J","V","S","D"].includes(d)?d:"L");
+  }
+
+  function normalizeSessionKey(sess){
+    const s = normalizeStr(String(sess ?? ""));
+    if(s.includes("tarde") || s==="t" || s==="pm" || s.includes("afternoon")) return "afternoon";
+    return "morning";
+  }
+
+  function formatTimeRange(r){
+    // Try to build from start/end or startH/endH
+    const a = r.start || r.startISO || r.startTime || r.timeStart;
+    const b = r.end || r.endISO || r.endTime || r.timeEnd;
+    if(a && b){
+      const sa = String(a).slice(11,16);
+      const sb = String(b).slice(11,16);
+      if(sa && sb && sa.includes(":") && sb.includes(":")) return `${sa}-${sb}`;
+    }
+    if(r.startH!=null && r.endH!=null){
+      const sh = String(r.startH).padStart(2,"0")+":00";
+      const eh = String(r.endH).padStart(2,"0")+":00";
+      return `${sh}-${eh}`;
+    }
+    return "";
+  }
+
+  function makeCell(cls, txt){
+    const d = document.createElement("div");
+    d.className = cls;
+    d.textContent = txt;
+    return d;
+  }
+
+  // --- Mini modal for block info ---
+  function ensureStructReportModal(){
+    if($("srModalBackdrop")) return;
+    const bd = document.createElement("div");
+    bd.id = "srModalBackdrop";
+    bd.className = "srModalBackdrop hide";
+    bd.innerHTML = `
+      <div class="srModal" role="dialog" aria-modal="true">
+        <div class="srModalRow">
+          <div class="srModalTitle" id="srModalTitle">—</div>
+          <button type="button" class="srModalCloseX" id="srModalCloseX" aria-label="Cerrar">✕</button>
+        </div>
+        <div class="srModalBody">
+          <div class="srModalLine"><span class="muted">Equipo:</span> <span id="srModalEquipo">—</span></div>
+          <div class="srModalLine"><span class="muted">Turno:</span> <span id="srModalTurno">—</span></div>
+          <div class="srModalLine"><span class="muted">Administrador:</span> <span id="srModalResp">—</span></div>
+          <div class="srModalLine"><span class="muted">Contacto:</span> <span id="srModalContact">—</span></div>
+        </div>
+        <div class="srModalActions">
+          <button type="button" class="btn" id="srModalCloseBtn">Cerrar</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(bd);
+
+    const close = ()=>{ bd.classList.add("hide"); };
+
+    bd.addEventListener("click",(e)=>{
+      if(e.target===bd) close();
+    });
+    $("srModalCloseX").onclick = close;
+    $("srModalCloseBtn").onclick = close;
+    document.addEventListener("keydown",(e)=>{
+      if(e.key==="Escape" && !bd.classList.contains("hide")) close();
     });
   }
 
-  // ===== INIT =====
+  
+  function findAdminForEquipo(label){
+    const key = normalizeEquipoKey(label);
+    const members = (key && S.groupsByEquipo && S.groupsByEquipo[key]) ? S.groupsByEquipo[key] : null;
+    if(!members || !members.length) return null;
+    // Prefer rol Administrador
+    const admin = members.find(m=> String(m.rol||"").toLowerCase()==="administrador") || members[0];
+    return admin || null;
+  }
+
+  function fmtAdminContact(admin){
+    if(!admin) return "—";
+    const email = admin.email || admin.correo || admin.mail || "";
+    const phone = admin.telefono || admin.phone || admin.tlf || "";
+    if(email && phone) return `${email} · ${phone}`;
+    if(email) return email;
+    if(phone) return phone;
+    return "—";
+  }
+
+
+function openStructReportBlockModal(info){
+    ensureStructReportModal();
+
+    const show = ()=>{
+      const admin = findAdminForEquipo(info.label) || null;
+
+      $("srModalEquipo").textContent = info.label || "—";
+      $("srModalTurno").textContent = info.session || "—";
+      $("srModalResp").textContent = (admin && (admin.nombre || admin.name)) ? (admin.nombre || admin.name) : (info.responsable || "—");
+      $("srModalContact").textContent = fmtAdminContact(admin);
+
+      $("srModalTitle").textContent = (info.label || "—");
+      $("srModalBackdrop").classList.remove("hide");
+    };
+
+    // Ensure group cache is loaded so we can resolve admin/contact
+    if(!S.groupsLoaded){
+      S.__afterGroupsLoad = ()=>{ S.__afterGroupsLoad = null; show(); };
+      loadGroupsCache(false);
+      return;
+    }
+
+    show();
+  }
+
+
+
+// ===== INIT =====
   function initDatesAndDefaults(){
     const t = todayISO();
     if($("rvDate")) $("rvDate").value = addDaysISO(1);
