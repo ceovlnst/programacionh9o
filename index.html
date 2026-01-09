@@ -439,32 +439,87 @@
     .groupsTools input:focus{border-color: rgba(29,78,216,.45); box-shadow: 0 0 0 3px rgba(29,78,216,.10)}
     .groupsCount{color:var(--muted); font-size:12px; margin:0 0 6px 0}
     .groupsList{max-height: 70vh; overflow:auto; padding-right:6px}
-    .gTeam{border:1px solid var(--line); border-radius:14px; background:#fff; margin:8px 0}
-    .gTeam summary{
-      cursor:pointer; list-style:none;
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
-      padding:10px 12px; font-weight:800;
-    }
-    .gTeam summary::-webkit-details-marker{display:none}
-    .gMembers{padding:0 12px 10px 12px}
-    .gRow{
-      display:grid;
-      grid-template-columns: 1.3fr 1.1fr .9fr;
-      gap:10px;
-      padding:6px 0;
-      border-top:1px solid var(--line);
-      font-size:12px;
-      color: var(--text);
-    }
-    .gRow .mut{color:var(--muted)}
-    .gRow a{color: var(--acc); text-decoration:none}
-    .gRow a:hover{text-decoration:underline}
-    @media (max-width: 720px){
-      .gRow{grid-template-columns: 1fr}
-    }
+    /* --- Equipos quirúrgicos: tarjetas bonitas y compactas (accordion) --- */
+.gGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+@media (max-width: 720px){ .gGrid{grid-template-columns:1fr} }
 
-  
-  /* --- Modal genérico --- */
+.gTeamCard{
+  border:1px solid var(--line);
+  border-radius:18px;
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(255,255,255,.80));
+  box-shadow: 0 10px 26px rgba(15,23,42,.06);
+  overflow:hidden;
+}
+.gTeamCard:hover{ box-shadow: 0 14px 34px rgba(15,23,42,.10); transform: translateY(-1px); transition: .15s ease; }
+
+.gTeamSummary{
+  list-style:none;
+  padding:12px 12px;
+  cursor:pointer;
+  user-select:none;
+}
+.gTeamSummary::-webkit-details-marker{display:none;}
+.gTeamTopRow{
+  display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+}
+.gTeamCode{
+  font-weight:850;
+  letter-spacing:.3px;
+  font-size:13px;
+  padding:6px 10px;
+  border-radius:999px;
+  background: rgba(2,132,199,.10);
+  border:1px solid rgba(2,132,199,.20);
+}
+.gTeamMeta{
+  display:flex; align-items:center; gap:8px; flex:1 1 auto; min-width:160px; flex-wrap:wrap;
+  color:var(--muted); font-size:12px;
+}
+.gTeamMeta b{ color:var(--text); font-weight:750; }
+.gTeamPill{
+  padding:4px 8px;
+  border-radius:999px;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.75);
+  font-size:12px;
+  color:var(--text);
+}
+.gTeamChevron{
+  margin-left:auto;
+  width:30px; height:30px;
+  border-radius:12px;
+  display:grid; place-items:center;
+  border:1px solid var(--line);
+  background: rgba(255,255,255,.70);
+}
+details[open] .gTeamChevron{ transform: rotate(180deg); transition:.15s ease; }
+
+.gTeamBody{
+  padding:10px 12px 12px 12px;
+  border-top:1px solid rgba(148,163,184,.35);
+  background: rgba(248,250,252,.70);
+}
+.gLine{
+  display:flex; flex-wrap:wrap; align-items:center;
+  gap:6px;
+  padding:8px 10px;
+  margin:7px 0 0 0;
+  border:1px solid rgba(148,163,184,.25);
+  border-radius:14px;
+  background: rgba(255,255,255,.85);
+  font-size:12.5px;
+  line-height:1.25;
+}
+.gLine:first-child{ margin-top:0; }
+.gLine .sep{ color:rgba(100,116,139,.75); }
+.gLine a{ color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.gEmptyTeam{
+  padding:12px;
+  color:var(--muted);
+  font-size:12px;
+}
+/* --- fin equipos quirúrgicos --- */
+/* --- Modal genérico --- */
   .modal{position:fixed;inset:0;background:rgba(15,23,42,.45);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
   .modalCard{width:min(640px,100%);background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 30px rgba(2,6,23,.25);padding:14px}
   .modalTop{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -519,17 +574,39 @@
   /* --- Equipos quirúrgicos: lista simple --- */
   .teamTools{display:flex;gap:10px;align-items:center;margin-top:8px}
   .teamTools input{flex:1;padding:10px 12px;border:1px solid var(--line);border-radius:14px;background:#fff}
-  .teamList{display:flex;flex-direction:column;gap:10px;margin-top:12px}
-  .teamCard{border:1px solid var(--line);border-radius:16px;background:#fff;overflow:hidden}
-  .teamHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 12px;background:linear-gradient(180deg, rgba(29,78,216,.06), rgba(29,78,216,0))}
-  .teamTitle{font-weight:900}
-  .teamMeta{font-size:12px;color:var(--muted);margin-top:4px}
-  .teamBtns{display:flex;align-items:center;gap:10px}
-  .teamBody{padding:10px 12px 12px 12px;border-top:1px solid var(--line)}
-  .memberItem{padding:10px 10px;border:1px solid var(--line);border-radius:14px;background:#fff}
-  .memberName{font-weight:800}
-  .memberSpec{font-size:12px;color:var(--muted);margin-top:2px}
-  .toggleBtn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;cursor:pointer;font-size:12px}
+  .teamList{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .teamList{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .teamCard{border:1px solid var(--line);border-radius:14px;background:#fff;overflow:hidden}
+  .teamHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;background:linear-gradient(180deg, rgba(29,78,216,.05), rgba(29,78,216,0))}
+  .teamTitle{font-weight:900;font-size:14px;line-height:1.1}
+  .teamMeta{font-size:12px;color:var(--muted);margin-top:2px}
+  .teamBtns{display:flex;align-items:center;gap:8px}
+  .teamBody{padding:10px 12px;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  @media (max-width: 640px){ .teamBody{grid-template-columns:1fr} }
+  .memberItem{padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:#fff}
+  .memberName{font-weight:800;font-size:13px;line-height:1.15}
+  .memberSpec{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  
+  /* --- Equipos (modal) ultra-compacto --- */
+  .teamCard{padding:10px 10px 8px}
+  .teamHead{margin-bottom:6px}
+  .teamTitle{font-size:13px}
+  .teamMeta{font-size:11px}
+  .teamBody{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+  .memberLine{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    align-items:baseline;
+    padding:3px 0;
+    border-top:1px dashed var(--line);
+  }
+  .teamBody .memberLine:first-child{border-top:none}
+  .mlName{font-weight:700;font-size:12.5px}
+  .mlRole,.mlSpec,.mlContact{font-size:12px;color:var(--muted)}
+  .mlContact a{color:inherit;text-decoration:none;border-bottom:1px dotted rgba(0,0,0,.25)}
+  .mlSep{color:var(--muted);font-size:12px}
+.toggleBtn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:6px 10px;cursor:pointer;font-size:12px}
 
 
   /* --- Columna derecha anclada (layout 1:1) --- */
@@ -553,12 +630,10 @@
   }
 
 
-  /* --- Ocultar acceso a Equipos Quirúrgicos (se carga en background) --- */
-  #btnOpenGroups{display:none !important}
+  /* (seguimos ocultando el panel lateral antiguo) */
   #groupsSideBack, #groupsPanel{display:none !important}
 
-
-  /* --- Modal centrado compacto (info bloque) --- */
+/* --- Modal centrado compacto (info bloque) --- */
   #modalBack{align-items:center !important; justify-content:center !important;}
   #modalBack .modal{width:min(560px,92vw) !important; max-height:86vh; overflow:auto; background:var(--card) !important;}
 
@@ -1040,34 +1115,15 @@
           <button class="btn hide" id="btnGoStruct">Generar Quirófanos</button>
           <button class="btn hide" id="btnGoWait">Lista de espera</button>
           <button class="btn hide" id="btnGoReport">Reporte</button>
-        </div>
+                  <button class="btn hide" id="btnGoGroups">Equipos quirúrgicos</button>
+</div>
 
         <div id="msgMenu" class="msg hide"></div>
       </div>
 
       <!-- RIGHT -->
       <div class="rightCol">
-
-      <!-- Equipos quirúrgicos (panel derecho) -->
-      <div class="card hide" id="groupsPanel">
-        <div class="row" style="justify-content:space-between;align-items:center">
-          <h2 style="margin:0">Equipos quirúrgicos</h2>
-          <button class="btn small ghost" id="btnCloseGroupsPanel" type="button">Cerrar</button>
-        </div>
-
-        <div class="mut" id="groupsPanelCount" style="margin-top:6px">—</div>
-
-        <label style="margin-top:10px">Buscar</label>
-        <div class="row">
-          <input id="groupsPanelSearch" type="search" placeholder="Equipo, cirujano o especialidad…" />
-          <button class="btn small ghost" id="groupsPanelClear" type="button">Limpiar</button>
-        </div>
-
-        <div class="actions" id="groupsPanelList" style="margin-top:10px"></div>
-        <div id="groupsPanelEmpty" class="mut" style="margin-top:8px;display:none">No hay resultados.</div>
-      </div>
-
-      <div class="card">
+<div class="card">
         <!-- USER: RESERVAR -->
         <div id="viewReserve" class="hide">
           <h2>Solicitud de quirófano</h2>
@@ -1142,8 +1198,7 @@
             </div>
             <div class="actions" style="margin-top:26px">
               <button class="btn primary" id="btnLoadGrid">Cargar parrilla</button>
-              <button class="btn" id="btnOpenGroups" title="Ver grupos quirúrgicos">Equipos quirúrgicos</button>
-            </div>
+</div>
           </div>
 
           <div id="gridReserveInfo" class="msg hide" style="margin-top:8px"></div>
@@ -1394,6 +1449,25 @@
           <div id="structVisualReport" class="reportGrid hide"></div>
         </div>
 
+
+        <!-- MASTER: EQUIPOS QUIRÚRGICOS -->
+        <div id="viewGroups" class="hide">
+          <div class="row" style="justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap">
+            <div>
+              <h2 style="margin:0">Equipos quirúrgicos</h2>
+              <div class="mut" id="groupsCount" style="margin-top:4px">—</div>
+            </div>
+            <div class="row" style="gap:8px;min-width:280px;flex:1;max-width:520px">
+              <input id="groupsSearch" type="search" placeholder="Buscar equipo, nombre, rol, email o teléfono…" />
+              <button class="btn small ghost" id="groupsClear" type="button">Limpiar</button>
+            </div>
+          </div>
+
+          <div id="groupsList" class="groupsCompact" style="margin-top:10px"></div>
+          <div id="groupsEmpty" class="mut" style="margin-top:10px;display:none">No hay resultados.</div>
+        </div>
+
+
         <!-- DEFAULT -->
         <div id="viewWelcome">
           <h2>Bienvenido</h2>
@@ -1527,9 +1601,12 @@
     if(sub){
       sub.textContent = S.isMaster ? "Solicitud de quirófano + coordinación" : "Solicitud de quirófano";
     }
+
+    document.body.classList.toggle("master", !!S.isMaster);
+
   }
   function hideAllViews(){
-    ["viewWelcome","viewReserve","viewMine","viewGrid","viewStruct","viewWait","viewReport"]
+    ["viewWelcome","viewReserve","viewMine","viewGrid","viewStruct","viewWait","viewReport","viewGroups"]
       .forEach(v => $(v).classList.add("hide"));
   }
   function go(viewId){
@@ -1574,6 +1651,7 @@
     $("btnGoStruct").classList.toggle("hide", !S.pin || !master);
     $("btnGoWait").classList.toggle("hide", !S.pin || !master);
     $("btnGoReport").classList.toggle("hide", !S.pin || !master);
+    $("btnGoGroups").classList.toggle("hide", !S.pin || !master);
   }
 
   function todayISO(){
@@ -1779,6 +1857,7 @@ function callGAS(fnName, args, opt){
       // precarga equipos quirúrgicos (para botón de cambio en parrilla)
       loadGroupsCache(true);
 S.doctor = doc;
+        S.isMaster = (doc.tipo === "Master");
         S.role = (doc.tipo === "Master") ? "Master" : "User";
         S.emailVisible = (doc.correo || doc.email || doc.mail || "—");
 
@@ -1804,6 +1883,7 @@ S.doctor = doc;
   function logout(){
     S.pin = null;
     S.role = null;
+    S.isMaster = false;
     S.doctor = null;
     S.emailVisible = null;
     S.lastSlots = [];
@@ -2943,7 +3023,141 @@ function loadGroupsCache(force){
   }
 
 
-function openGroupsModal(){ /* oculto */ }
+
+
+function openGroupsView(){
+  // Solo master
+  if(!S.pin || !isMaster()) return;
+
+  const render = ()=>{
+    const q = normalizeStr(($("groupsSearch")?.value || "").trim());
+    const all = Array.isArray(S.groupsCache) ? S.groupsCache.slice() : [];
+
+    // Orden: equipo, rol, nombre
+    all.sort((a,b)=>{
+      const ea = normalizeEquipoKey(a.equipo||"");
+      const eb = normalizeEquipoKey(b.equipo||"");
+      if(ea !== eb) return ea.localeCompare(eb,"es");
+      const ra = normalizeStr(a.rol||"");
+      const rb = normalizeStr(b.rol||"");
+      if(ra !== rb) return ra.localeCompare(rb,"es");
+      const na = String(a.nombre||a.cirujano||"").trim();
+      const nb = String(b.nombre||b.cirujano||"").trim();
+      return na.localeCompare(nb,"es");
+    });
+
+    // Filtrar
+    const filtered = !q ? all : all.filter(g=>{
+      const hay = [
+        g.equipo, g.nombre||g.cirujano, g.rol, g.especialidad, g.email, g.telefono
+      ].map(x=>normalizeStr(String(x||""))).join(" ");
+      return hay.includes(q);
+    });
+
+    // Agrupar por equipo
+    const by = {};
+    filtered.forEach(g=>{
+      const key = (g.equipo||"").trim();
+      if(!key) return;
+      if(!by[key]) by[key] = [];
+      by[key].push(g);
+    });
+
+    const teams = Object.keys(by).sort((a,b)=>normalizeEquipoKey(a).localeCompare(normalizeEquipoKey(b),"es"));
+    $("groupsCount").textContent = `${teams.length} equipo(s) · ${filtered.length} miembro(s)`;
+    const list = $("groupsList");
+    list.innerHTML = "";
+
+    if(teams.length === 0){
+      $("groupsEmpty").style.display = "block";
+      return;
+    }
+    $("groupsEmpty").style.display = "none";
+
+    teams.forEach(team=>{
+      const members = by[team] || [];
+      const admin = members.find(m=>{
+        const r = normalizeStr(m.rol||"");
+        return r.includes("admin") || r.includes("administrador");
+      }) || null;
+      const adminName = String((admin && (admin.nombre||admin.cirujano)) || "").trim() || "—";
+      const others = members.filter(m=> m !== admin);
+
+      const linesHtml = others.map(m=>{
+        const nombre = escapeHtml(String(m.nombre||m.cirujano||"").trim());
+        const rol = escapeHtml(String(m.rol||"").trim());
+        const esp = escapeHtml(String(m.especialidad||"").trim());
+        const mail = escapeHtml(String(m.email||"").trim());
+        const tel  = escapeHtml(String(m.telefono||"").trim());
+
+        const parts = [];
+        parts.push(`<b>${nombre || "—"}</b>`);
+        const extras = [
+          (rol && rol !== "—") ? rol : "",
+          esp ? esp : "",
+          mail ? mail : "",
+          tel ? tel : ""
+        ].filter(Boolean);
+
+        for(const x of extras){
+          parts.push(`<span class="sep">·</span>`);
+          parts.push(`<span>${x}</span>`);
+        }
+        return `<div class="gLine">${parts.join("")}</div>`;
+      }).join("");
+
+      const header = (others.length > 0) ? `
+        <details class="gTeamCard">
+          <summary class="gTeamSummary">
+            <div class="gTeamTopRow">
+              <div class="gTeamCode">${escapeHtml(team)}</div>
+              <div class="gTeamMeta">
+                <span class="gTeamPill">${members.length} miembro(s)</span>
+                <span class="gTeamPill">Admin: <b>${escapeHtml(adminName)}</b></span>
+              </div>
+              <div class="gTeamChevron">▾</div>
+            </div>
+          </summary>
+          <div class="gTeamBody">
+            ${linesHtml}
+          </div>
+        </details>
+      ` : `
+        <div class="gTeamCard">
+          <div class="gTeamSummary" style="cursor:default">
+            <div class="gTeamTopRow">
+              <div class="gTeamCode">${escapeHtml(team)}</div>
+              <div class="gTeamMeta">
+                <span class="gTeamPill">${members.length} miembro(s)</span>
+                <span class="gTeamPill">Admin: <b>${escapeHtml(adminName)}</b></span>
+              </div>
+            </div>
+          </div>
+          <div class="gEmptyTeam">Sin miembros adicionales.</div>
+        </div>
+      `;
+      list.insertAdjacentHTML("beforeend", header);
+    });
+  };
+
+  const ensure = ()=>{
+    // Wire UI
+    if($("groupsSearch")){
+      $("groupsSearch").oninput = ()=>render();
+      $("groupsClear").onclick = ()=>{ $("groupsSearch").value=""; render(); };
+    }
+    render();
+  };
+
+  if(!S.groupsLoaded){
+    S.__afterGroupsLoad = ensure;
+    loadGroupsCache(true);
+  }else{
+    ensure();
+  }
+}
+
+
 
 function normalizeStr(value){
   let s = String(value||"").trim().toLowerCase();
@@ -3574,15 +3788,14 @@ function groupInfoHtmlForLabel(label){
     $("btnGoWait").onclick    = openWaitlist;
     $("btnGoReport").onclick  = ()=>go("viewReport");
 
-    $("btnCheckSlots").onclick = checkSlots;
+    
+
+    if($("btnGoGroups")) $("btnGoGroups").onclick = ()=>{ go("viewGroups"); openGroupsView(); };$("btnCheckSlots").onclick = checkSlots;
     $("btnOpenWaitlistFromReserve").onclick = openWaitlistFromReserve;
     $("btnLoadMine").onclick = loadMine;
 
     $("btnLoadGrid").onclick = loadGrid;
-
-    if($("btnOpenGroups")) $("btnOpenGroups").onclick = openGroupsModal;
-
-    $("btnToggleAdvanced").onclick = ()=>{
+$("btnToggleAdvanced").onclick = ()=>{
       $("advancedBox").classList.toggle("hide");
     };
 
