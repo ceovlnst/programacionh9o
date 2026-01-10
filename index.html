@@ -1077,7 +1077,7 @@ details[open] .gTeamChevron{ transform: rotate(180deg); transition:.15s ease; }
 .srCell{ min-width:120px; }
 .srCellStack{ display:flex; flex-direction:column; gap:4px; }
 .srEmpty{ font-size:12px; opacity:.6; padding:2px 0; }
-.srCard{ width:100%; border:0; text-align:left; padding:6px 8px; border-radius:10px; background:#16a34a; color:#fff; cursor:pointer; }
+.srCard{ width:100%; border:1px solid rgba(0,0,0,.14); text-align:left; padding:6px 8px; border-radius:10px; background:#fff; color:#0f172a; cursor:pointer; }
 .srCard:hover{ filter:brightness(0.95); }
 .srCardTop{ display:flex; align-items:center; justify-content:space-between; gap:6px; }
 .srLabel{ font-weight:800; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px; }
@@ -1200,7 +1200,7 @@ details[open] .gTeamChevron{ transform: rotate(180deg); transition:.15s ease; }
 
           <label>Nombre</label><input id="suNombre" placeholder="Nombre" />
           <label>Apellidos</label><input id="suApellidos" placeholder="Apellidos" />
-          <label>Servicio / Especialidad</label><input id="suEsp" placeholder="Ej: Traumatología" />
+          <label>Servicio / Especialidad</label><select id="suEsp"></select>
           <label>Correo</label><input id="suCorreo" placeholder="Correo electrónico" />
           <label>Teléfono</label><input id="suTel" placeholder="Teléfono" />
 
@@ -1486,6 +1486,32 @@ details[open] .gTeamChevron{ transform: rotate(180deg); transition:.15s ease; }
                     <option value="">(Todos)</option>
                   </select>
                 </div>
+
+                <div class="field">
+                  <label>Filtrar por quirófano</label>
+                  <select id="structOrFilter">
+                    <option value="">(Todos)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Filtrar por hora de inicio</label>
+                  <select id="structHourFilter">
+                    <option value="">(Todas)</option>
+                  </select>
+                </div>
+                <div class="field">
+                  <label>Filtrar por día</label>
+                  <select id="structDayFilter">
+                    <option value="">(Todos)</option>
+                    <option value="L">Lunes</option>
+                    <option value="M">Martes</option>
+                    <option value="X">Miércoles</option>
+                    <option value="J">Jueves</option>
+                    <option value="V">Viernes</option>
+                    <option value="S">Sábado</option>
+                    <option value="D">Domingo</option>
+                  </select>
+                </div>
                 <div>
                   <button class="btn small" id="btnStructClearFilter">Quitar filtro</button>
                 </div>
@@ -1654,6 +1680,33 @@ details[open] .gTeamChevron{ transform: rotate(180deg); transition:.15s ease; }
     "Paritorio 1","Paritorio 2"
   ];
 
+  const SPECIALTIES = [
+    "Traumatología y Cirugía Ortopédica",
+    "Cirugía General y Digestiva",
+    "Anestesiología y Reanimación",
+    "Ginecología y Obstetricia",
+    "Urología",
+    "Oftalmología",
+    "Otorrinolaringología (ORL)",
+    "Neurocirugía",
+    "Cirugía Vascular",
+    "Cirugía Torácica",
+    "Cirugía Cardíaca",
+    "Cirugía Plástica, Estética y Reparadora",
+    "Cirugía Maxilofacial",
+    "Cirugía Pediátrica",
+    "Otros"
+  ];
+
+  function fillSpecialties(){
+    const sel = $("suEsp");
+    if(!sel) return;
+    if(sel.dataset.filled) return;
+    sel.innerHTML = '<option value="">(Selecciona)</option>' + SPECIALTIES.map(s=>`<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+    sel.dataset.filled = "1";
+  }
+
+
   const S = {
     pin: null,
     role: null,           // "Master" | "Usuario"
@@ -1666,6 +1719,9 @@ details[open] .gTeamChevron{ transform: rotate(180deg); transition:.15s ease; }
 
     structRulesCache: [],
     structTeamFilter: "",
+    structDayFilter: "",
+    structOrFilter: "",
+    structHourFilter: "",
     orCalcSelected: [],
 
     modalCtx: null,
@@ -2898,6 +2954,37 @@ const mfOr = $("mfOr");
       });
       select.value = S.structTeamFilter || "";
     }
+    const daySel = $("structDayFilter");
+    if(daySel){
+      daySel.value = S.structDayFilter || "";
+    }
+
+    const orSel = $("structOrFilter");
+    if(orSel){
+      const ors = Array.from(new Set(rules.map(r=>String(r.orName || r.location || "").trim()).filter(Boolean))).sort((a,b)=>a.localeCompare(b,"es"));
+      orSel.innerHTML = '<option value="">(Todos)</option>';
+      ors.forEach(o=>{
+        const opt = document.createElement("option");
+        opt.value = o;
+        opt.textContent = o;
+        orSel.appendChild(opt);
+      });
+      orSel.value = S.structOrFilter || "";
+    }
+
+    const hourSel = $("structHourFilter");
+    if(hourSel){
+      const hours = Array.from(new Set(rules.map(r=>String(r.startHour ?? "").trim()).filter(Boolean))).map(h=>Number(h)).filter(n=>Number.isFinite(n)).sort((a,b)=>a-b);
+      hourSel.innerHTML = '<option value="">(Todas)</option>';
+      hours.forEach(h=>{
+        const opt = document.createElement("option");
+        opt.value = String(h);
+        opt.textContent = String(h).padStart(2,"0")+":00";
+        hourSel.appendChild(opt);
+      });
+      hourSel.value = S.structHourFilter || "";
+    }
+
 
     const box = $("structList");
     const msg = $("msgStruct");
@@ -2910,9 +2997,28 @@ const mfOr = $("mfOr");
       return;
     }
 
-    const filtered = S.structTeamFilter
-      ? rules.filter(r => String(r.label || "").trim() === S.structTeamFilter)
-      : rules.slice();
+    const filtered = rules.filter(r=>{
+      const okTeam = S.structTeamFilter ? (String(r.label||"").trim() === S.structTeamFilter) : true;
+      if(!okTeam) return false;
+
+      const okOr = S.structOrFilter ? (String(r.orName||r.location||"").trim() === S.structOrFilter) : true;
+      if(!okOr) return false;
+
+      const okHour = S.structHourFilter ? (String(r.startHour ?? "").trim() === String(S.structHourFilter)) : true;
+      if(!okHour) return false;
+
+      if(S.structDayFilter){
+        const dKey = String(S.structDayFilter);
+        // rule.weekdays suele venir como ["MONDAY", ...]
+        const map = {L:"MONDAY",M:"TUESDAY",X:"WEDNESDAY",J:"THURSDAY",V:"FRIDAY",S:"SATURDAY",D:"SUNDAY"};
+        const wantA = dKey;
+        const wantB = map[dKey] || dKey;
+        const arr = Array.isArray(r.weekdays) ? r.weekdays.map(String) : [];
+        const okDay = arr.includes(wantA) || arr.includes(wantB);
+        if(!okDay) return false;
+      }
+      return true;
+    });
 
     const table = document.createElement("table");
     const thead = document.createElement("thead");
@@ -3051,9 +3157,30 @@ const mfOr = $("mfOr");
     renderStructFiltersAndList();
   }
 
+  function setStructDayFilter(){
+    S.structDayFilter = $("structDayFilter").value || "";
+    renderStructFiltersAndList();
+  }
+
+  function setStructOrFilter(){
+    S.structOrFilter = $("structOrFilter").value || "";
+    renderStructFiltersAndList();
+  }
+
+  function setStructHourFilter(){
+    S.structHourFilter = $("structHourFilter").value || "";
+    renderStructFiltersAndList();
+  }
+
   function clearStructFilter(){
     S.structTeamFilter = "";
-    $("structTeamFilter").value = "";
+    S.structDayFilter = "";
+    S.structOrFilter = "";
+    S.structHourFilter = "";
+    if($("structTeamFilter")) $("structTeamFilter").value = "";
+    if($("structDayFilter")) $("structDayFilter").value = "";
+    if($("structOrFilter")) $("structOrFilter").value = "";
+    if($("structHourFilter")) $("structHourFilter").value = "";
     renderStructFiltersAndList();
   }
 
@@ -3284,6 +3411,23 @@ function escapeHtml(input){
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+// --- Color estable por equipo (HSL) ---
+function teamColorForLabel(label){
+  const s = String(label||"").trim().toUpperCase();
+  let h = 0;
+  for(let i=0;i<s.length;i++){
+    h = (h*31 + s.charCodeAt(i)) >>> 0;
+  }
+  const hue = h % 360;
+  // Fondo fuerte (100% saturación) y luminosidad moderada para que no sea pastel
+  return {
+    bg: `hsl(${hue} 100% 42%)`,
+    border: `hsl(${hue} 100% 28%)`,
+    text: "#ffffff",
+    hue
+  };
 }
 
 
@@ -3833,37 +3977,64 @@ function groupInfoHtmlForLabel(label){
     const dayName = {L:"Lunes", M:"Martes", X:"Miércoles", J:"Jueves", V:"Viernes", S:"Sábado", D:"Domingo"};
     const sessName = {morning:"Mañana", afternoon:"Tarde"};
 
-    // Build table-like grid with sticky location column + scroll horizontal
-    const wrap = document.createElement("div");
-    wrap.className = "srWrap";
-    const grid = document.createElement("div");
-    grid.className = "srGrid";
+    // ✅ Render en TABLA (estilo Excel) para evitar solapes de celdas (bug de sticky+grid en algunos navegadores)
+    const scroll = document.createElement("div");
+    scroll.className = "structReportScroll";
 
-    // Header row: empty cell for location + day headers spanning 2 cols
-    grid.appendChild(makeCell("srHead srLocHead", "Ubicación"));
+    const table = document.createElement("table");
+    table.className = "structReportTable";
+
+    const thead = document.createElement("thead");
+    const tr1 = document.createElement("tr");
+
+    const thLoc = document.createElement("th");
+    thLoc.className = "srLoc";
+    thLoc.rowSpan = 2;
+    thLoc.textContent = "Ubicación";
+    tr1.appendChild(thLoc);
+
     dayOrder.forEach(d=>{
-      const h = makeCell("srHead", dayName[d]);
-      h.style.gridColumn = "span 2";
-      grid.appendChild(h);
+      const th = document.createElement("th");
+      th.className = "srDay";
+      th.colSpan = 2;
+      th.innerHTML = `<div class="srDayTop">${escapeHtml(dayName[d])}</div><div class="srDayKey">${d}</div>`;
+      tr1.appendChild(th);
     });
 
-    // Second header: empty under location + sessions
-    grid.appendChild(makeCell("srSubHead srLocHead2", ""));
+    const tr2 = document.createElement("tr");
     dayOrder.forEach(_d=>{
-      grid.appendChild(makeCell("srSubHead", "M"));
-      grid.appendChild(makeCell("srSubHead", "T"));
+      const thM = document.createElement("th");
+      thM.className = "srSess";
+      thM.textContent = "M";
+      tr2.appendChild(thM);
+
+      const thT = document.createElement("th");
+      thT.className = "srSess";
+      thT.textContent = "T";
+      tr2.appendChild(thT);
     });
 
-    // Rows per location
+    thead.appendChild(tr1);
+    thead.appendChild(tr2);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+
     [...map.keys()].sort((a,b)=>a.localeCompare(b,"es")).forEach(loc=>{
-      // location cell
-      const locCell = makeCell("srLoc", loc);
-      grid.appendChild(locCell);
+      const tr = document.createElement("tr");
+
+      const tdLoc = document.createElement("td");
+      tdLoc.className = "srLocCell";
+      tdLoc.textContent = loc;
+      tr.appendChild(tdLoc);
 
       dayOrder.forEach(d=>{
         ["morning","afternoon"].forEach(sess=>{
-          const cell = document.createElement("div");
-          cell.className = "srCell";
+          const td = document.createElement("td");
+          td.className = "srCell";
+
+          const stack = document.createElement("div");
+          stack.className = "srCellStack";
 
           const items = map.get(loc)[d][sess];
           if(items && items.length){
@@ -3871,39 +4042,59 @@ function groupInfoHtmlForLabel(label){
               const btn = document.createElement("button");
               btn.type = "button";
               btn.className = "srCard";
+              // En la tarjeta: solo el nombre del equipo
               btn.innerHTML = `<div class="srCardTop"><span class="srLabel">${escapeHtml(it.label || "—")}</span></div>`;
+              const __c = teamColorForLabel(it.label);
+              btn.style.background = __c.bg;
+              btn.style.borderColor = __c.border;
+              btn.style.color = __c.text || "#fff";
+              // sombra mínima para separar sin “pastel”
+              btn.style.boxShadow = "inset 0 0 0 1px rgba(255,255,255,.10)";
+
               btn.onclick = ()=>{
                 openStructReportBlockModal({
                   location: loc,
                   day: dayName[d],
+                  dayKey: d,
                   session: sessName[sess],
+                  sessionKey: sess,
                   label: it.label,
+                  time: it.time || "",
                   responsable: it.responsable || "—"
                 });
               };
-              cell.appendChild(btn);
+              stack.appendChild(btn);
             });
 
             if(items.length>6){
               const more = document.createElement("div");
               more.className = "srMore";
               more.textContent = `+${items.length-6} más`;
-              cell.appendChild(more);
+              stack.appendChild(more);
             }
           }else{
-            cell.classList.add("srEmpty");
+            const empty = document.createElement("div");
+            empty.className = "srEmpty";
+            empty.textContent = "";
+            stack.appendChild(empty);
           }
-          grid.appendChild(cell);
+
+          td.appendChild(stack);
+          tr.appendChild(td);
         });
       });
+
+      tbody.appendChild(tr);
     });
 
-    wrap.appendChild(grid);
-    box.appendChild(wrap);
+    table.appendChild(tbody);
+    scroll.appendChild(table);
+    box.appendChild(scroll);
 
     // Ensure modal exists once
     ensureStructReportModal();
   }
+
 
   function normalizeStructReportRows(data){
     if(!data) return [];
@@ -4050,6 +4241,8 @@ function groupInfoHtmlForLabel(label){
         <div class="srModalBody">
           <div class="srModalLine"><span class="muted">Equipo:</span> <span id="srModalEquipo">—</span></div>
           <div class="srModalLine"><span class="muted">Turno:</span> <span id="srModalTurno">—</span></div>
+          <div class="srModalLine"><span class="muted">Cadencia:</span> <span id="srModalCadence">—</span></div>
+          <div class="srModalLine"><span class="muted">Configuración:</span> <span id="srModalCadenceCfg">—</span></div>
           <div class="srModalLine"><span class="muted">Administrador:</span> <span id="srModalResp">—</span></div>
           <div class="srModalLine"><span class="muted">Contacto:</span> <span id="srModalContact">—</span></div>
         </div>
@@ -4092,6 +4285,95 @@ function groupInfoHtmlForLabel(label){
     return "—";
   }
 
+  // --- Cadencia: resolver regla estructural para un bloque del reporte ---
+  function findStructRuleForBlock(info){
+    const locKey = normalizeStr(info.location||"");
+    const labelKey = normalizeStr(info.label||"");
+    const dayKey = info.dayKey || normalizeDayKey(info.day);
+    const sessName = (function(v){
+      const s = normalizeStr(String(v||""));
+      if(s==="m"||s==="manana"||s.includes("mañana")||s.includes("morning")) return "mañana";
+      if(s==="t"||s==="tarde"||s.includes("afternoon")) return "tarde";
+      return s;
+    })(info.session);
+    const rules = Array.isArray(S.structRulesCache) ? S.structRulesCache : [];
+    if(!rules.length) return null;
+
+    const inferSess = (r)=>{
+      if(r.sessionNameEs) return String(r.sessionNameEs).toLowerCase();
+      const sh = Number(r.startHour ?? r.startHourFloat ?? r.start ?? NaN);
+      if(!Number.isFinite(sh)) return "";
+      return (sh < 15) ? "mañana" : "tarde";
+    };
+
+    // 1) Match fuerte (loc+label+day+session)
+    let hit = rules.find(r=>{
+      return normalizeStr(r.orName||r.location||"")===locKey &&
+             normalizeStr(r.label||r.team||"")===labelKey &&
+             (()=>{
+             const arr = Array.isArray(r.weekdays) ? r.weekdays.map(String) : [];
+             if(!arr.length) return true;
+             const map = {L:"MONDAY",M:"TUESDAY",X:"WEDNESDAY",J:"THURSDAY",V:"FRIDAY",S:"SATURDAY",D:"SUNDAY"};
+             const wantA = String(dayKey);
+             const wantB = map[wantA] || wantA;
+             return arr.includes(wantA) || arr.includes(wantB);
+           })() &&
+             inferSess(r)===sessName;
+    });
+    if(hit) return hit;
+
+    // 2) Match sin sesión (por si faltan horas o sesión)
+    hit = rules.find(r=>{
+      return normalizeStr(r.orName||r.location||"")===locKey &&
+             normalizeStr(r.label||r.team||"")===labelKey &&
+             (()=>{
+             const arr = Array.isArray(r.weekdays) ? r.weekdays.map(String) : [];
+             if(!arr.length) return true;
+             const map = {L:"MONDAY",M:"TUESDAY",X:"WEDNESDAY",J:"THURSDAY",V:"FRIDAY",S:"SATURDAY",D:"SUNDAY"};
+             const wantA = String(dayKey);
+             const wantB = map[wantA] || wantA;
+             return arr.includes(wantA) || arr.includes(wantB);
+           })();
+    });
+    return hit || null;
+  }
+
+  function describeCadence(rule){
+    if(!rule) return {name:"—", cfg:"—"};
+    const mode = String(rule.cadenceMode||"").toUpperCase();
+    const name = rule.cadenceNameEs || (
+      mode==="MONTH_WEEKS" ? "Mensual (semanas del mes)" :
+      mode==="WEEKLY" ? "Semanal" :
+      mode ? mode : "—"
+    );
+
+    const dayName = {L:"Lunes",M:"Martes",X:"Miércoles",J:"Jueves",V:"Viernes",S:"Sábado",D:"Domingo"};
+    const dow = Array.isArray(rule.weekdays) ? rule.weekdays.map(String) : [];
+    const dows = dow.length ? dow.map(d=>dayName[d]||d).join(", ") : "—";
+
+    const wom = Array.isArray(rule.weeksOfMonth) ? rule.weeksOfMonth.map(String) : [];
+    const womFmt = wom.length ? wom.map(w=>`${w}ª`).join(", ") : "—";
+
+    const interval = Number(rule.intervalWeeks||1);
+    const intervalTxt = (mode==="WEEKLY" && interval>1) ? `Cada ${interval} semanas` : (mode==="WEEKLY" ? "Cada semana" : "");
+
+    const startDate = rule.startDate ? String(rule.startDate) : "";
+    const endDate = rule.endDate ? String(rule.endDate) : "";
+    const dateTxt = (startDate || endDate) ? `${startDate || "—"} → ${endDate || "—"}` : "—";
+
+    const sh = rule.startHour != null ? String(rule.startHour) : "";
+    const dur = rule.durationHours != null ? String(rule.durationHours) : "";
+    const timeTxt = (sh || dur) ? `${sh || "—"}h · ${dur || "—"}h` : "—";
+
+    let extra = [];
+    if(intervalTxt) extra.push(intervalTxt);
+    if(mode==="MONTH_WEEKS") extra.push(`Semanas del mes: ${womFmt}`);
+    extra.push(`Días: ${dows}`);
+    extra.push(`Hora/Duración: ${timeTxt}`);
+
+    return {name, cfg: extra.join(" · ")};
+  }
+
 
 function openStructReportBlockModal(info){
     ensureStructReportModal();
@@ -4101,6 +4383,11 @@ function openStructReportBlockModal(info){
 
       $("srModalEquipo").textContent = info.label || "—";
       $("srModalTurno").textContent = info.session || "—";
+      const __rule = findStructRuleForBlock(info);
+      const __cad = describeCadence(__rule);
+      $("srModalCadence").textContent = __cad.name || "—";
+      $("srModalCadenceCfg").textContent = __cad.cfg || "—";
+
       $("srModalResp").textContent = (admin && (admin.nombre || admin.name)) ? (admin.nombre || admin.name) : (info.responsable || "—");
       $("srModalContact").textContent = fmtAdminContact(admin);
 
@@ -4108,14 +4395,34 @@ function openStructReportBlockModal(info){
       $("srModalBackdrop").classList.remove("hide");
     };
 
+    const ensureStructThenShow = ()=>{
+      // Para mostrar cadencia/configuración necesitamos tener la programación estructural cargada
+      if(!S.structRulesCache || !S.structRulesCache.length){
+        callGAS("listStructuralRules", [S.pin], {
+          key:"listStructForReportModal",
+          msg:"Cargando programación estructural…",
+          onSuccess:(res)=>{
+            S.structRulesCache = res.rules || [];
+            show();
+          },
+          onFailure:(_)=>{
+            // Si falla, igualmente mostramos el modal (pero sin cadencia)
+            show();
+          }
+        });
+        return;
+      }
+      show();
+    };
+
     // Ensure group cache is loaded so we can resolve admin/contact
     if(!S.groupsLoaded){
-      S.__afterGroupsLoad = ()=>{ S.__afterGroupsLoad = null; show(); };
+      S.__afterGroupsLoad = ()=>{ S.__afterGroupsLoad = null; ensureStructThenShow(); };
       loadGroupsCache(false);
       return;
     }
 
-    show();
+    ensureStructThenShow();
   }
 
 
@@ -4139,6 +4446,7 @@ function openStructReportBlockModal(info){
     initOrCalcDefaults();
     buildOrCalcChips();
     fillStructSelectors();
+    fillSpecialties();
     syncCadenceUI();
     initDatesAndDefaults();
     setSessionPill();
@@ -4185,7 +4493,10 @@ $("btnToggleAdvanced").onclick = ()=>{
     $("btnReloadStruct").onclick = refreshStructList;
     $("btnStructClearFilter").onclick = clearStructFilter;
     $("structTeamFilter").onchange = setStructTeamFilter;
-    $("stCadence").onchange = syncCadenceUI;
+    if($("structDayFilter")) $("structDayFilter").onchange = setStructDayFilter;
+$("structOrFilter").onchange = setStructOrFilter;
+    $("structHourFilter").onchange = setStructHourFilter;
+        $("stCadence").onchange = syncCadenceUI;
 
     // NO estructurales master
     $("btnNSFindSlots").onclick = ()=>masterFindNonStructSlots();
