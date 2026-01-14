@@ -2616,7 +2616,7 @@ $("modalBack").classList.add("hide");
 
   openModalBase(title, lines + masterMini + footer);
 
-  $("btnCloseBottom").onclick = ()=>closeModal();
+  if($("btnCloseBottom")) $("btnCloseBottom").onclick = ()=>closeModal();
 
   const bswap = $("btnAskSwapFooter");
   if(bswap){
@@ -2628,7 +2628,7 @@ $("modalBack").classList.add("hide");
   }
 
   if(isMaster()){
-    $("mCancelOcc").onclick = ()=>{
+    if($("mCancelOcc")) $("mCancelOcc").onclick = ()=>{
       if(isStruct) cancelStructBlock();
       else deleteNonStructBlock();
     };
@@ -2942,8 +2942,85 @@ const mfOr = $("mfOr");
     return (rule.weekdays || []).map(w=>map[w] || w).join(",");
   }
 
-  function renderStructFiltersAndList(){
-    const rules = S.structRulesCache || [];
+  
+  // ✅ Deduplicar reglas estructurales (mismo equipo/día/hora/quirófano/cadencia, distintos IDs)
+  function dedupeStructuralRules_(rawRules){
+    const map = new Map(); // key -> bestRule
+    let dupCount = 0;
+
+    function normStr_(v){ return String(v == null ? "" : v).trim().toUpperCase(); }
+    function normArr_(a){
+      if(!Array.isArray(a)) return "";
+      return a.map(normStr_).filter(Boolean).sort().join(",");
+    }
+    function normNum_(v){
+      const n = Number(v);
+      return Number.isFinite(n) ? String(n) : "";
+    }
+    function normDate_(v){
+      // Acepta Date, string ISO, "YYYY-MM-DD", etc. Devuelve "YYYY-MM-DD" si se puede.
+      if(!v) return "";
+      try{
+        if(v instanceof Date && !isNaN(v.getTime())) return v.toISOString().slice(0,10);
+        const s = String(v).trim();
+        // ya viene YYYY-MM-DD
+        if(/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+        const d = new Date(s);
+        if(!isNaN(d.getTime())) return d.toISOString().slice(0,10);
+      }catch(e){}
+      return String(v).trim();
+    }
+    function buildKey_(r){
+      // Campos "estables" que definen el bloque, ignorando el ID
+      const parts = [
+        normStr_(r.label),
+        normStr_(r.orName),
+        normNum_(r.startHour),
+        normNum_(r.durHours),
+        normDate_(r.startDate),
+        normDate_(r.endDate),
+        normStr_(r.cadence || r.cadenceName || r.cadenceNameEs),
+        normArr_(r.weekdays),
+        // para reglas tipo "month weeks"
+        normArr_(r.monthWeeks),
+        normArr_(r.weeksOfMonth),
+      ];
+      return parts.join("|");
+    }
+    function scoreRule_(r){
+      // preferir la que "cubre más" y/o sea más reciente
+      const end = normDate_(r.endDate);
+      const start = normDate_(r.startDate);
+      // si hay timestamps, úsalos; si no, 0
+      const upd = Number(r.updatedAt || r.updated_at || r.ts || 0) || 0;
+      const crt = Number(r.createdAt || r.created_at || 0) || 0;
+      return { end, start, upd, crt, id: String(r.id || "") };
+    }
+    function isBetter_(a,b){
+      const sa = scoreRule_(a), sb = scoreRule_(b);
+      if(sa.end !== sb.end) return sa.end > sb.end;
+      if(sa.start !== sb.start) return sa.start > sb.start;
+      if(sa.upd !== sb.upd) return sa.upd > sb.upd;
+      if(sa.crt !== sb.crt) return sa.crt > sb.crt;
+      return sa.id > sb.id;
+    }
+
+    (rawRules || []).forEach(r=>{
+      const key = buildKey_(r);
+      const prev = map.get(key);
+      if(!prev){ map.set(key, r); return; }
+      dupCount++;
+      if(isBetter_(r, prev)) map.set(key, r);
+    });
+
+    return { rules: Array.from(map.values()), dupCount };
+  }
+
+function renderStructFiltersAndList(){
+    const rawRules = S.structRulesCache || [];
+    const dd = dedupeStructuralRules_(rawRules);
+    const rules = dd.rules;
+    const dupCount = dd.dupCount;
 
     const select = $("structTeamFilter");
     if(select){
@@ -3050,7 +3127,7 @@ const mfOr = $("mfOr");
     table.appendChild(tbody);
     box.appendChild(table);
 
-    $("structSummary").textContent = `${rules.length} reglas totales. Mostrando ${filtered.length}.`;
+    $("structSummary").textContent = `${rawRules.length} reglas totales (${dupCount} duplicadas ocultas). Mostrando ${filtered.length}.`;
   }
 
   function refreshStructList(){
@@ -3228,7 +3305,7 @@ function loadGroupsCache(force){
     const hint = $("mfHint");
     if(hint) hint.textContent = 'Se aplican cambios solo a este bloque (ocurrencia). No modifica la serie.';
 
-    $("mfCancelBtn").onclick = ()=>{
+    if($("mfCancelBtn")) $("mfCancelBtn").onclick = ()=>{
 
       // Salir de modo edición
       const bv = $("blockView");
@@ -3241,7 +3318,7 @@ function loadGroupsCache(force){
       hideMsg($("modalMsg"));
     };
 
-    $("mfApplyBtn").onclick = ()=>applyModalChanges();
+    if($("mfApplyBtn")) $("mfApplyBtn").onclick = ()=>applyModalChanges();
 
   }
 
@@ -3381,7 +3458,7 @@ function openGroupsView(){
     // Wire UI
     if($("groupsSearch")){
       $("groupsSearch").oninput = ()=>render();
-      $("groupsClear").onclick = ()=>{ $("groupsSearch").value=""; render(); };
+      if($("groupsClear")) $("groupsClear").onclick = ()=>{ $("groupsSearch").value=""; render(); };
     }
     render();
   };
@@ -4261,8 +4338,8 @@ function groupInfoHtmlForLabel(label){
     bd.addEventListener("click",(e)=>{
       if(e.target===bd) close();
     });
-    $("srModalCloseX").onclick = close;
-    $("srModalCloseBtn").onclick = close;
+    if($("srModalCloseX")) $("srModalCloseX").onclick = close;
+    if($("srModalCloseBtn")) $("srModalCloseBtn").onclick = close;
     document.addEventListener("keydown",(e)=>{
       if(e.key==="Escape" && !bd.classList.contains("hide")) close();
     });
@@ -4446,6 +4523,21 @@ function openStructReportBlockModal(info){
   }
 
   document.addEventListener("DOMContentLoaded", ()=>{
+    // Captura errores para que no parezca que "no hace nada"
+    window.addEventListener("error", (ev)=>{
+      try{
+        const msg = (ev && ev.message) ? ("Error JS: " + ev.message) : "Error JS.";
+        showMsg($("msgLogin"), msg, "bad");
+      }catch(e){}
+    });
+    window.addEventListener("unhandledrejection", (ev)=>{
+      try{
+        const reason = ev && ev.reason ? (ev.reason.message || String(ev.reason)) : "Promise rechazada.";
+        showMsg($("msgLogin"), "Error JS: " + reason, "bad");
+      }catch(e){}
+    });
+
+    try{
     initOrCalcDefaults();
     buildOrCalcChips();
     fillStructSelectors();
@@ -4455,33 +4547,33 @@ function openStructReportBlockModal(info){
     setSessionPill();
     setMenuButtons();
 
-    $("btnLogin").onclick = login;
-    $("btnClear").onclick = ()=>{$("pinInput").value = ""; hideMsg($("msgLogin"));};
-    $("btnLogout").onclick = logout;
+    if($("btnLogin")) $("btnLogin").onclick = login;
+    if($("btnClear")) $("btnClear").onclick = ()=>{$("pinInput").value = ""; hideMsg($("msgLogin"));};
+    if($("btnLogout")) $("btnLogout").onclick = logout;
 
-    $("btnToggleSignup").onclick = toggleSignup;
-    $("btnSignup").onclick = signup;
+    if($("btnToggleSignup")) $("btnToggleSignup").onclick = toggleSignup;
+    if($("btnSignup")) $("btnSignup").onclick = signup;
 
-    $("btnGoReserve").onclick = ()=>go("viewReserve");
-    $("btnGoMine").onclick    = ()=>go("viewMine");
-    $("btnGoGrid").onclick    = ()=>{ go("viewGrid"); loadGrid(); };
-    $("btnGoStruct").onclick  = ()=>{
+    if($("btnGoReserve")) $("btnGoReserve").onclick = ()=>go("viewReserve");
+    if($("btnGoMine")) $("btnGoMine").onclick    = ()=>go("viewMine");
+    if($("btnGoGrid")) $("btnGoGrid").onclick    = ()=>{ go("viewGrid"); loadGrid(); };
+    if($("btnGoStruct")) $("btnGoStruct").onclick  = ()=>{
       go("viewStruct");
       refreshStructList();
       loadDoctorOptionsMaster();
     };
 
-    $("btnGoWait").onclick    = openWaitlist;
-    $("btnGoReport").onclick  = ()=>go("viewReport");
+    if($("btnGoWait")) $("btnGoWait").onclick    = openWaitlist;
+    if($("btnGoReport")) $("btnGoReport").onclick  = ()=>go("viewReport");
 
     
 
     if($("btnGoGroups")) $("btnGoGroups").onclick = ()=>{ go("viewGroups"); openGroupsView(); };$("btnCheckSlots").onclick = checkSlots;
-    $("btnOpenWaitlistFromReserve").onclick = openWaitlistFromReserve;
-    $("btnLoadMine").onclick = loadMine;
+    if($("btnOpenWaitlistFromReserve")) $("btnOpenWaitlistFromReserve").onclick = openWaitlistFromReserve;
+    if($("btnLoadMine")) $("btnLoadMine").onclick = loadMine;
 
-    $("btnLoadGrid").onclick = loadGrid;
-$("btnToggleAdvanced").onclick = ()=>{
+    if($("btnLoadGrid")) $("btnLoadGrid").onclick = loadGrid;
+if($("btnToggleAdvanced")) $("btnToggleAdvanced").onclick = ()=>{
       $("advancedBox").classList.toggle("hide");
     };
 
@@ -4490,11 +4582,11 @@ $("btnToggleAdvanced").onclick = ()=>{
     if($("btnRvPrevDay"))   $("btnRvPrevDay").onclick   = ()=>moveReserveDay(-1);
     if($("btnRvNextDay"))   $("btnRvNextDay").onclick   = ()=>moveReserveDay(1);
 
-    $("btnNewStruct").onclick = clearStructEditor;
-    $("btnSaveStruct").onclick = saveStructFromEditor;
-    $("btnDeleteStructById").onclick = deleteStructById;
-    $("btnReloadStruct").onclick = refreshStructList;
-    $("btnStructClearFilter").onclick = clearStructFilter;
+    if($("btnNewStruct")) $("btnNewStruct").onclick = clearStructEditor;
+    if($("btnSaveStruct")) $("btnSaveStruct").onclick = saveStructFromEditor;
+    if($("btnDeleteStructById")) $("btnDeleteStructById").onclick = deleteStructById;
+    if($("btnReloadStruct")) $("btnReloadStruct").onclick = refreshStructList;
+    if($("btnStructClearFilter")) $("btnStructClearFilter").onclick = clearStructFilter;
     $("structTeamFilter").onchange = setStructTeamFilter;
     if($("structDayFilter")) $("structDayFilter").onchange = setStructDayFilter;
 $("structOrFilter").onchange = setStructOrFilter;
@@ -4502,8 +4594,8 @@ $("structOrFilter").onchange = setStructOrFilter;
         $("stCadence").onchange = syncCadenceUI;
 
     // NO estructurales master
-    $("btnNSFindSlots").onclick = ()=>masterFindNonStructSlots();
-    $("btnNSAssignSlot").onclick = masterAssignNonStructSlot;
+    if($("btnNSFindSlots")) $("btnNSFindSlots").onclick = ()=>masterFindNonStructSlots();
+    if($("btnNSAssignSlot")) $("btnNSAssignSlot").onclick = masterAssignNonStructSlot;
 
     const selDoctor = $("stNSDoctorSelect");
     if(selDoctor){
@@ -4513,14 +4605,18 @@ $("structOrFilter").onchange = setStructOrFilter;
       };
     }
 
-    $("btnLoadWait").onclick = loadWaitlistMaster;
+    if($("btnLoadWait")) $("btnLoadWait").onclick = loadWaitlistMaster;
     $("wlFilter").onchange = ()=>{ if(!$("#viewWait").classList.contains("hide")) loadWaitlistMaster(); };
 
-    $("btnSendReport").onclick = sendReport;
-    $("btnStructVisualReport").onclick = generateStructVisualReport;
+    if($("btnSendReport")) $("btnSendReport").onclick = sendReport;
+    if($("btnStructVisualReport")) $("btnStructVisualReport").onclick = generateStructVisualReport;
 
-    $("btnModalClose").onclick = closeModal;
-    $("btnModalApply").onclick = applyModalChanges;
+    if($("btnModalClose")) $("btnModalClose").onclick = closeModal;
+    if($("btnModalApply")) $("btnModalApply").onclick = applyModalChanges;
+    }catch(e){
+      try{ showMsg($("msgLogin"), "Error JS: " + (e && e.message ? e.message : String(e)), "bad"); }catch(_){}
+      throw e;
+    }
   });
 
 // --- Solicitud de cambio: modal + envío directo (Apps Script) ---
