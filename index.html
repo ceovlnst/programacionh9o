@@ -2942,33 +2942,8 @@ const mfOr = $(mfOr);
     return (rule.weekdays  []).map(w=map[w]  w).join(,);
   }
 
-  
-  function dedupeStructRulesClient(rules){
-    const out = [];
-    const seen = new Set(); // key per weekday
-    (rules || []).forEach(r=>{
-      if(!r) return;
-      const label = String(r.label||"").trim().toLowerCase();
-      const orName = String(r.orName||"").trim().toLowerCase();
-      const sh = String(r.startHour);
-      const days = Array.isArray(r.weekdays) ? r.weekdays : [];
-      const keepDays = [];
-      days.forEach(d=>{
-        const k = label+"|"+orName+"|"+sh+"|"+String(d);
-        if(seen.has(k)) return;
-        seen.add(k);
-        keepDays.push(d);
-      });
-      if(!keepDays.length) return;
-      const clone = Object.assign({}, r);
-      clone.weekdays = keepDays;
-      out.push(clone);
-    });
-    return out;
-  }
-
-function renderStructFiltersAndList(){
-    const rules = dedupeStructRulesClient(S.structRulesCache || []);
+  function renderStructFiltersAndList(){
+    const rules = S.structRulesCache  [];
 
     const select = $(structTeamFilter);
     if(select){
